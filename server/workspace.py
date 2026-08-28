@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -12,15 +13,15 @@ class WorkspaceError(Exception):
 
 
 def _validate_workspace_name(name: str) -> None:
-    """Validate workspace name to prevent path traversal and other attacks."""
-    if not name or not isinstance(name, str):
-        raise WorkspaceError("Workspace name cannot be empty")
-    if Path(name).is_absolute():
-        raise WorkspaceError(f"Workspace name cannot be an absolute path: {name}")
-    if "/" in name or "\\" in name:
-        raise WorkspaceError(f"Workspace name cannot contain path separators: {name}")
-    if ".." in name:
-        raise WorkspaceError(f"Workspace name cannot contain '..': {name}")
+    """Validate workspace name against a strict allowlist pattern.
+
+    Only allows alphanumeric characters, hyphen, and underscore to prevent
+    path traversal, absolute paths, drive letters, and other exploits.
+    """
+    if not re.match(r"^[A-Za-z0-9_-]+$", name):
+        raise WorkspaceError(
+            f"Workspace name must contain only letters, digits, hyphen, and underscore; got '{name}'"
+        )
 
 
 def _workspace_dir(name: str) -> Path:

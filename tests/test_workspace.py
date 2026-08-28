@@ -111,3 +111,27 @@ def test_open_workspace_with_boolean_json_raises_clear_error():
     graph_path.write_text("true", encoding="utf-8")
     with pytest.raises(workspace.WorkspaceError):
         workspace.open_workspace("novel-a")
+
+
+def test_create_workspace_with_colon_windows_drive_bypass_raises():
+    """Reject Windows drive-letter bypass like 'C:evil'."""
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.create_workspace("C:evil")
+
+
+def test_create_workspace_with_valid_underscore_name():
+    """Valid names with underscores should work."""
+    workspace.create_workspace("my_novel_1")
+    assert workspace.list_workspaces() == ["my_novel_1"]
+    graph = workspace.open_workspace("my_novel_1")
+    assert graph["nodes"] == []
+    assert graph["links"] == []
+
+
+def test_create_workspace_with_valid_hyphen_name():
+    """Valid names with hyphens should work."""
+    workspace.create_workspace("test-123")
+    assert workspace.list_workspaces() == ["test-123"]
+    graph = workspace.open_workspace("test-123")
+    assert graph["nodes"] == []
+    assert graph["links"] == []
