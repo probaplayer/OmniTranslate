@@ -63,3 +63,50 @@ def test_open_missing_workspace_returns_404():
     client = TestClient(app)
     response = client.get("/api/workspaces/does-not-exist")
     assert response.status_code == 404
+
+
+def test_websocket_run_streams_events_and_writes_file(tmp_path):
+    src = tmp_path / "in.txt"
+    src.write_text("raw chapter", encoding="utf-8")
+    dst = tmp_path / "out.txt"
+
+    client = TestClient(app)
+    graph = {
+        "nodes": [
+            {"id": "1", "type": "LoadTextFile", "inputs": {"path": str(src)}},
+            {"id": "2", "type": "SaveTextFile", "inputs": {"path": str(dst)}},
+        ],
+        "links": [
+            {"from_node": "1", "from_output": "text", "to_node": "2", "to_input": "text"}
+        ],
+    }
+
+    events = []
+    with client.websocket_connect("/ws/run/any") as websocket:
+        websocket.send_json({"graph": graph})
+        while True:
+            event = websocket.receive_json()
+            events.append(event)
+            if event["event"] == "run_finished":
+                break
+
+    assert dst.read_text(encoding="utf-8") == "raw chapter"
+    event_names = [e["event"] for e in events]
+    assert event_names == [
+        "node_started",
+        "node_completed",
+        "node_started",
+        "node_completed",
+        "run_finished",
+    ]
+
+
+def test_websocket_run_reports_validation_error():
+    client = TestClient(app)
+    graph = {"nodes": [{"id": "1", "type": "LoadTextFile", "inputs": {}}], "links": []}
+
+    with client.websocket_connect("/ws/run/any") as websocket:
+        websocket.send_json({"graph": graph})
+        event = websocket.receive_json()
+
+    assert event["event"] == "validation_error"

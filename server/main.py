@@ -1,10 +1,14 @@
+import asyncio
+import queue
+import threading
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from server import workspace
+from server.executor import GraphValidationError, run_graph
 from server.node_registry import list_node_metadata
 from server.nodes import utility  # noqa: F401  (triggers registration)
 
@@ -67,6 +71,37 @@ def delete_workspace(name: str):
     except workspace.WorkspaceError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     return {"status": "ok"}
+
+
+@app.websocket("/ws/run/{workspace_name}")
+async def ws_run(websocket: WebSocket, workspace_name: str):
+    await websocket.accept()
+    data = await websocket.receive_json()
+    graph = data["graph"]
+
+    event_queue: "queue.Queue" = queue.Queue()
+
+    def on_event(event):
+        event_queue.put(event)
+
+    def worker():
+        try:
+            run_graph(graph["nodes"], graph["links"], on_event=on_event)
+        except GraphValidationError as exc:
+            event_queue.put({"event": "validation_error", "message": str(exc)})
+        finally:
+            event_queue.put(None)
+
+    threading.Thread(target=worker, daemon=True).start()
+
+    loop = asyncio.get_event_loop()
+    while True:
+        event = await loop.run_in_executor(None, event_queue.get)
+        if event is None:
+            break
+        await websocket.send_json(event)
+
+    await websocket.close()
 
 
 app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
