@@ -89,6 +89,8 @@ async def ws_run(websocket: WebSocket, workspace_name: str):
             run_graph(graph["nodes"], graph["links"], on_event=on_event)
         except GraphValidationError as exc:
             event_queue.put({"event": "validation_error", "message": str(exc)})
+        except Exception as exc:
+            event_queue.put({"event": "runtime_error", "message": str(exc)})
         finally:
             event_queue.put(None)
 

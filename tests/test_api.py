@@ -110,3 +110,42 @@ def test_websocket_run_reports_validation_error():
         event = websocket.receive_json()
 
     assert event["event"] == "validation_error"
+
+
+def test_websocket_run_reports_runtime_error_for_invalid_link_output(tmp_path):
+    src = tmp_path / "in.txt"
+    src.write_text("raw chapter", encoding="utf-8")
+    dst = tmp_path / "out.txt"
+
+    client = TestClient(app)
+    graph = {
+        "nodes": [
+            {"id": "1", "type": "LoadTextFile", "inputs": {"path": str(src)}},
+            {"id": "2", "type": "SaveTextFile", "inputs": {"path": str(dst)}},
+        ],
+        "links": [
+            # "nonexistent" is not in LoadTextFile's RETURN_NAMES ("text",),
+            # so run_graph raises a plain ValueError while assembling node 2's
+            # kwargs -- before node 2's node_started is ever emitted, and
+            # after node 1 has already fully completed.
+            {
+                "from_node": "1",
+                "from_output": "nonexistent",
+                "to_node": "2",
+                "to_input": "text",
+            }
+        ],
+    }
+
+    events = []
+    with client.websocket_connect("/ws/run/any") as websocket:
+        websocket.send_json({"graph": graph})
+        while True:
+            event = websocket.receive_json()
+            events.append(event)
+            if event["event"] == "runtime_error":
+                break
+
+    event_names = [e["event"] for e in events]
+    assert event_names == ["node_started", "node_completed", "runtime_error"]
+    assert events[-1]["message"]
