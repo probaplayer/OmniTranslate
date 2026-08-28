@@ -99,3 +99,43 @@ def test_run_graph_writes_file_via_real_utility_nodes(tmp_path):
     run_graph(nodes, links)
 
     assert dst.read_text(encoding="utf-8") == "raw chapter"
+
+
+def test_run_graph_unregistered_node_type_raises_gracefully():
+    nodes = [{"id": "1", "type": "UnknownNodeType", "inputs": {}}]
+    with pytest.raises(GraphValidationError) as exc_info:
+        run_graph(nodes, [])
+    assert "unknown node type" in str(exc_info.value).lower()
+
+
+def test_run_graph_skipped_node_has_output_entry():
+    nodes = [
+        {"id": "1", "type": "_TestFail", "inputs": {"value": "a"}},
+        {"id": "2", "type": "_TestAdd", "inputs": {"value": "unused"}},
+    ]
+    links = [{"from_node": "1", "from_output": "out", "to_node": "2", "to_input": "value"}]
+
+    outputs = run_graph(nodes, links)
+
+    # Verify that skipped node 2 has an entry in outputs dict (empty tuple)
+    assert "2" in outputs
+    assert outputs["2"] == ()
+    # Verify that error node 1 also has an entry
+    assert "1" in outputs
+    assert outputs["1"] == ()
+
+
+def test_run_graph_dangling_link_reference_raises_gracefully():
+    nodes = [{"id": "1", "type": "_TestAdd", "inputs": {"value": "a"}}]
+    links = [{"from_node": "1", "from_output": "out", "to_node": "nonexistent", "to_input": "value"}]
+    with pytest.raises(GraphValidationError) as exc_info:
+        run_graph(nodes, links)
+    assert "unknown node id" in str(exc_info.value).lower()
+
+
+def test_run_graph_dangling_link_source_raises_gracefully():
+    nodes = [{"id": "1", "type": "_TestAdd", "inputs": {"value": "a"}}]
+    links = [{"from_node": "nonexistent", "from_output": "out", "to_node": "1", "to_input": "value"}]
+    with pytest.raises(GraphValidationError) as exc_info:
+        run_graph(nodes, links)
+    assert "unknown node id" in str(exc_info.value).lower()

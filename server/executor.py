@@ -8,14 +8,25 @@ class GraphValidationError(Exception):
 
 
 def _build_dependency_map(nodes, links):
+    node_ids = {n["id"] for n in nodes}
     dependents = {n["id"]: [] for n in nodes}
     dependency_count = {n["id"]: 0 for n in nodes}
     link_by_target = {}
     for link in links:
-        dependents[link["from_node"]].append(link["to_node"])
-        dependency_count[link["to_node"]] += 1
-        link_by_target[(link["to_node"], link["to_input"])] = (
-            link["from_node"],
+        from_node = link["from_node"]
+        to_node = link["to_node"]
+        if from_node not in node_ids:
+            raise GraphValidationError(
+                f"Link references unknown node id '{from_node}'"
+            )
+        if to_node not in node_ids:
+            raise GraphValidationError(
+                f"Link references unknown node id '{to_node}'"
+            )
+        dependents[from_node].append(to_node)
+        dependency_count[to_node] += 1
+        link_by_target[(to_node, link["to_input"])] = (
+            from_node,
             link["from_output"],
         )
     return dependents, dependency_count, link_by_target
@@ -40,7 +51,12 @@ def topological_order(nodes, links) -> list:
 
 def validate_required_inputs(nodes, link_by_target) -> None:
     for node in nodes:
-        node_cls = get_node_class(node["type"])
+        try:
+            node_cls = get_node_class(node["type"])
+        except KeyError:
+            raise GraphValidationError(
+                f"Node {node['id']} references unknown node type '{node['type']}'"
+            )
         required = node_cls.INPUT_TYPES().get("required", {})
         for input_name in required:
             has_literal = input_name in node.get("inputs", {})
@@ -67,6 +83,7 @@ def run_graph(nodes, links, on_event=None) -> dict:
 
     for node_id in order:
         if node_id in skipped:
+            outputs[node_id] = ()
             emit(
                 {
                     "event": "node_error",
