@@ -2,9 +2,23 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>Node Translator</title>
+  <title>Node Translator — Workspaces</title>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
-  <p>Workspace picker loads here (Task 8).</p>
+  <main class="picker">
+    <h1>Chọn workspace</h1>
+    <ul id="workspace-list"></ul>
+
+    <h2>Tạo workspace mới</h2>
+    <form id="create-form">
+      <input id="new-name" placeholder="Tên workspace" required />
+      <input id="new-source-lang" placeholder="Ngôn ngữ nguồn (vd: ja)" />
+      <input id="new-target-lang" placeholder="Ngôn ngữ đích (vd: vi)" />
+      <button type="submit">Tạo</button>
+    </form>
+    <p id="picker-error" class="error"></p>
+  </main>
+  <script src="/js/workspace_picker.js"></script>
 </body>
 </html>
