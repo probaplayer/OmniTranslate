@@ -17,10 +17,18 @@ function colorForEvent(eventName) {
 
 async function init() {
   const nodesResponse = await fetch("/api/nodes");
+  if (!nodesResponse.ok) {
+    setStatus(`Lỗi tải danh sách node: ${nodesResponse.status}`);
+    return;
+  }
   const nodeMetadataList = await nodesResponse.json();
   registerDynamicNodeTypes(nodeMetadataList);
 
   const graphResponse = await fetch(`/api/workspaces/${encodeURIComponent(workspaceName)}`);
+  if (!graphResponse.ok) {
+    setStatus(`Lỗi tải workspace: ${graphResponse.status}`);
+    return;
+  }
   const savedGraph = await graphResponse.json();
   if (savedGraph.nodes && savedGraph.nodes.length) {
     graph.configure(savedGraph);
@@ -30,11 +38,15 @@ async function init() {
 }
 
 async function saveGraph() {
-  await fetch(`/api/workspaces/${encodeURIComponent(workspaceName)}/graph`, {
+  const response = await fetch(`/api/workspaces/${encodeURIComponent(workspaceName)}/graph`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(graph.serialize()),
   });
+  if (!response.ok) {
+    setStatus(`Lỗi lưu: ${response.status}`);
+    return;
+  }
   setStatus("Đã lưu");
 }
 
@@ -44,6 +56,8 @@ function runGraph() {
 
   ws.onopen = () => ws.send(JSON.stringify({ graph: payload }));
 
+  ws.onerror = () => setStatus("Lỗi kết nối WebSocket");
+
   ws.onmessage = (message) => {
     const event = JSON.parse(message.data);
     if (event.event === "run_finished") {
@@ -52,6 +66,10 @@ function runGraph() {
     }
     if (event.event === "validation_error") {
       setStatus(`Lỗi: ${event.message}`);
+      return;
+    }
+    if (event.event === "runtime_error") {
+      setStatus(`Lỗi thực thi: ${event.message}`);
       return;
     }
     const node = graph.getNodeById(Number(event.node_id));
