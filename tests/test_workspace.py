@@ -63,3 +63,51 @@ def test_delete_workspace_removes_directory():
 def test_delete_missing_workspace_raises():
     with pytest.raises(workspace.WorkspaceError):
         workspace.delete_workspace("does-not-exist")
+
+
+def test_create_workspace_with_path_traversal_raises():
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.create_workspace("../evil")
+
+
+def test_create_workspace_with_forward_slash_raises():
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.create_workspace("evil/path")
+
+
+def test_create_workspace_with_backslash_raises():
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.create_workspace("evil\\path")
+
+
+def test_create_workspace_with_absolute_path_raises():
+    abs_path = str(workspace.WORKSPACES_ROOT.parent / "evil")
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.create_workspace(abs_path)
+
+
+def test_open_workspace_with_non_dict_json_raises_clear_error():
+    workspace.create_workspace("novel-a")
+    graph_path = workspace.WORKSPACES_ROOT / "novel-a" / "graph.json"
+    # Test with null (valid JSON but not a dict)
+    graph_path.write_text("null", encoding="utf-8")
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.open_workspace("novel-a")
+
+
+def test_open_workspace_with_number_json_raises_clear_error():
+    workspace.create_workspace("novel-a")
+    graph_path = workspace.WORKSPACES_ROOT / "novel-a" / "graph.json"
+    # Test with number (valid JSON but not a dict)
+    graph_path.write_text("42", encoding="utf-8")
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.open_workspace("novel-a")
+
+
+def test_open_workspace_with_boolean_json_raises_clear_error():
+    workspace.create_workspace("novel-a")
+    graph_path = workspace.WORKSPACES_ROOT / "novel-a" / "graph.json"
+    # Test with boolean (valid JSON but not a dict)
+    graph_path.write_text("true", encoding="utf-8")
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.open_workspace("novel-a")

@@ -11,7 +11,20 @@ class WorkspaceError(Exception):
     pass
 
 
+def _validate_workspace_name(name: str) -> None:
+    """Validate workspace name to prevent path traversal and other attacks."""
+    if not name or not isinstance(name, str):
+        raise WorkspaceError("Workspace name cannot be empty")
+    if Path(name).is_absolute():
+        raise WorkspaceError(f"Workspace name cannot be an absolute path: {name}")
+    if "/" in name or "\\" in name:
+        raise WorkspaceError(f"Workspace name cannot contain path separators: {name}")
+    if ".." in name:
+        raise WorkspaceError(f"Workspace name cannot contain '..': {name}")
+
+
 def _workspace_dir(name: str) -> Path:
+    _validate_workspace_name(name)
     return WORKSPACES_ROOT / name
 
 
@@ -48,6 +61,8 @@ def open_workspace(name: str) -> dict:
         graph = json.loads(graph_path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, FileNotFoundError) as exc:
         raise WorkspaceError(f"Workspace '{name}' has a corrupted graph.json: {exc}")
+    if not isinstance(graph, dict):
+        raise WorkspaceError(f"Workspace '{name}' graph.json must be a JSON object (dict), got {type(graph).__name__}")
     if "nodes" not in graph or "links" not in graph:
         raise WorkspaceError(f"Workspace '{name}' graph.json missing 'nodes'/'links'")
     return graph
