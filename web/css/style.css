@@ -1,0 +1,31 @@
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 600px;
+  margin: 40px auto;
+  color: #222;
+}
+
+.picker ul {
+  list-style: none;
+  padding: 0;
+}
+
+.picker li {
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.picker form {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.hint {
+  color: #666;
+  font-size: 0.85em;
+}
+
+.error {
+  color: #b00020;
+}

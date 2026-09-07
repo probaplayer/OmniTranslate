@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Node Translator — Canvas</title>
+  <link rel="stylesheet" href="/css/litegraph.css" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    /* style.css centres body in 600px for the workspace picker; the canvas
+       page needs the full viewport width instead. */
+    body.canvas-page { max-width: none; margin: 0; }
+    #graph-canvas { width: 100vw; height: 80vh; display: block; }
+    #toolbar { padding: 8px; }
+  </style>
+</head>
+<body class="canvas-page">
+  <div id="toolbar">
+    <a href="/index.html">&larr; Workspaces</a>
+    <button id="run-button">Run</button>
+    <button id="save-button">Save</button>
+    <span id="status"></span>
+  </div>
+  <canvas id="graph-canvas"></canvas>
+  <script src="/js/litegraph.js"></script>
+  <script src="/js/nodegen.js"></script>
+  <script src="/js/canvas_app.js"></script>
+</body>
+</html>
