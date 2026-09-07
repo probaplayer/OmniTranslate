@@ -116,3 +116,28 @@ def test_complete_raises_provider_error_on_network_failure():
 
     with pytest.raises(ProviderError):
         provider.complete([{"role": "user", "content": "hi"}])
+
+
+from translation_core.providers.factory import ProviderConfig, create_provider
+
+
+def test_create_provider_openai_compatible():
+    config = ProviderConfig(
+        type="openai_compatible",
+        base_url="http://localhost:1234/v1",
+        api_key="dummy",
+        model="local-model",
+    )
+
+    provider = create_provider(config)
+
+    assert isinstance(provider, OpenAICompatibleProvider)
+    assert provider.base_url == "http://localhost:1234/v1"
+    assert provider.model == "local-model"
+
+
+def test_create_provider_unknown_type_raises():
+    config = ProviderConfig(type="unknown", base_url="", api_key="", model="")
+
+    with pytest.raises(ProviderError):
+        create_provider(config)
