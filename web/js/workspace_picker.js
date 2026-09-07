@@ -6,6 +6,7 @@ async function loadWorkspaces() {
     list.innerHTML = "";
     for (const name of data.workspaces) {
       const item = document.createElement("li");
+      item.className = "workspace-card";
       const link = document.createElement("a");
       link.href = `/canvas.html?workspace=${encodeURIComponent(name)}`;
       link.textContent = name;

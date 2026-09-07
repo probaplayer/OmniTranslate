@@ -5,8 +5,21 @@ const graph = new LGraph();
 const canvasEl = document.getElementById("graph-canvas");
 const canvas = new LGraphCanvas(canvasEl, graph);
 
-function setStatus(text) {
-  document.getElementById("status").textContent = text;
+// The <canvas> element's drawing-buffer resolution defaults to 300x150 and
+// does not track its CSS/flex-layout size on its own -- without this, nodes
+// are drawn into (and clipped by) that tiny buffer while it's stretched to
+// fill the page, making them invisible or misplaced relative to real mouse
+// coordinates.
+function syncCanvasSize() {
+  canvas.resize(canvasEl.clientWidth, canvasEl.clientHeight);
+}
+syncCanvasSize();
+window.addEventListener("resize", syncCanvasSize);
+
+function setStatus(text, kind = "info") {
+  const statusEl = document.getElementById("status");
+  statusEl.textContent = text;
+  statusEl.className = `status-${kind}`;
 }
 
 function colorForEvent(eventName) {
@@ -18,15 +31,16 @@ function colorForEvent(eventName) {
 async function init() {
   const nodesResponse = await fetch("/api/nodes");
   if (!nodesResponse.ok) {
-    setStatus(`Lỗi tải danh sách node: ${nodesResponse.status}`);
+    setStatus(`Lỗi tải danh sách node: ${nodesResponse.status}`, "error");
     return;
   }
   const nodeMetadataList = await nodesResponse.json();
   registerDynamicNodeTypes(nodeMetadataList);
+  initNodePalette(nodeMetadataList, graph, canvas, canvasEl);
 
   const graphResponse = await fetch(`/api/workspaces/${encodeURIComponent(workspaceName)}`);
   if (!graphResponse.ok) {
-    setStatus(`Lỗi tải workspace: ${graphResponse.status}`);
+    setStatus(`Lỗi tải workspace: ${graphResponse.status}`, "error");
     return;
   }
   const savedGraph = await graphResponse.json();
@@ -44,10 +58,10 @@ async function saveGraph() {
     body: JSON.stringify(graph.serialize()),
   });
   if (!response.ok) {
-    setStatus(`Lỗi lưu: ${response.status}`);
+    setStatus(`Lỗi lưu: ${response.status}`, "error");
     return;
   }
-  setStatus("Đã lưu");
+  setStatus("Đã lưu", "ok");
 }
 
 function runGraph() {
@@ -56,20 +70,20 @@ function runGraph() {
 
   ws.onopen = () => ws.send(JSON.stringify({ graph: payload }));
 
-  ws.onerror = () => setStatus("Lỗi kết nối WebSocket");
+  ws.onerror = () => setStatus("Lỗi kết nối WebSocket", "error");
 
   ws.onmessage = (message) => {
     const event = JSON.parse(message.data);
     if (event.event === "run_finished") {
-      setStatus("Hoàn tất");
+      setStatus("Hoàn tất", "ok");
       return;
     }
     if (event.event === "validation_error") {
-      setStatus(`Lỗi: ${event.message}`);
+      setStatus(`Lỗi: ${event.message}`, "error");
       return;
     }
     if (event.event === "runtime_error") {
-      setStatus(`Lỗi thực thi: ${event.message}`);
+      setStatus(`Lỗi thực thi: ${event.message}`, "error");
       return;
     }
     const node = graph.getNodeById(Number(event.node_id));
