@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 workspaces/
 web/vendor/
+.worktrees/
+.pytest_cache/
