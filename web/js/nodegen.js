@@ -30,15 +30,43 @@ function registerDynamicNodeTypes(nodeMetadataList) {
   }
 }
 
+// Names of the node's inputs that have an incoming link. litegraph sets
+// `input.link` to null when the slot is unconnected and to a link id when
+// it is connected.
+function linkedInputNames(node) {
+  const names = new Set();
+  for (const input of node.inputs || []) {
+    if (input && input.link !== null && input.link !== undefined) {
+      names.add(input.name);
+    }
+  }
+  return names;
+}
+
 // buildExecutionPayload reads node.properties (not widgets_values) as the
 // source of truth: litegraph restores `properties` verbatim on configure(),
 // while widget display sync after reload is a separate, non-blocking concern.
 function buildExecutionPayload(graph) {
-  const nodes = graph._nodes.map((n) => ({
-    id: String(n.id),
-    type: n.constructor.nodeType,
-    inputs: Object.assign({}, n.properties),
-  }));
+  const nodes = graph._nodes.map((n) => {
+    const linked = linkedInputNames(n);
+    const inputs = {};
+    for (const [name, value] of Object.entries(n.properties || {})) {
+      // Every input's property is initialized to `config.default || ""`, so
+      // without this an untouched widget would arrive as a literal "" and the
+      // server's missing-required-input check could never fire. A blank
+      // widget means "not provided" -- unless the slot is connected, in which
+      // case the link supplies the real value at execution time and the
+      // (unused) blank property is kept so nothing about the connection
+      // changes.
+      if (value === "" && !linked.has(name)) continue;
+      inputs[name] = value;
+    }
+    return {
+      id: String(n.id),
+      type: n.constructor.nodeType,
+      inputs,
+    };
+  });
 
   const links = [];
   for (const linkId in graph.links) {

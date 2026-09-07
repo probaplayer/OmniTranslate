@@ -12,11 +12,26 @@
 
     <h2>Tạo workspace mới</h2>
     <form id="create-form">
-      <input id="new-name" placeholder="Tên workspace" required />
+      <!-- The hyphen in `pattern` is escaped so the character class stays
+           valid when the browser compiles the pattern with the `v` flag: an
+           unescaped trailing `-` fails to compile there, and a pattern that
+           fails to compile is silently ignored entirely. Same character set
+           as the backend's allowlist. -->
+      <input
+        id="new-name"
+        placeholder="Tên workspace (vd: truyen-a)"
+        pattern="[A-Za-z0-9_\-]+"
+        title="Chỉ dùng chữ cái, chữ số, dấu gạch ngang (-) và gạch dưới (_)"
+        required
+      />
       <input id="new-source-lang" placeholder="Ngôn ngữ nguồn (vd: ja)" />
       <input id="new-target-lang" placeholder="Ngôn ngữ đích (vd: vi)" />
       <button type="submit">Tạo</button>
     </form>
+    <p class="hint">
+      Tên workspace chỉ được chứa chữ cái, chữ số, dấu gạch ngang (-) và gạch
+      dưới (_) — không có dấu cách hay ký tự đặc biệt.
+    </p>
     <p id="picker-error" class="error"></p>
   </main>
   <script src="/js/workspace_picker.js"></script>

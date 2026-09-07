@@ -21,6 +21,11 @@ body {
   margin-top: 12px;
 }
 
+.hint {
+  color: #666;
+  font-size: 0.85em;
+}
+
 .error {
   color: #b00020;
 }
