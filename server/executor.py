@@ -7,6 +7,31 @@ class GraphValidationError(Exception):
     pass
 
 
+MAX_EVENT_STRING_CHARS = 500
+
+
+def _truncate_outputs_for_event(result):
+    """Cap long string outputs for the streamed node_completed event.
+
+    A real chapter of text has no business being shipped over the websocket
+    on every run. Only the emitted event is trimmed -- run_graph's returned
+    outputs dict keeps the full values, since downstream nodes and callers
+    need them intact.
+    """
+    if not isinstance(result, (tuple, list)):
+        return result
+    trimmed = []
+    for value in result:
+        if isinstance(value, str) and len(value) > MAX_EVENT_STRING_CHARS:
+            trimmed.append(
+                value[:MAX_EVENT_STRING_CHARS]
+                + f"...(truncated, {len(value)} chars total)"
+            )
+        else:
+            trimmed.append(value)
+    return tuple(trimmed)
+
+
 def _build_dependency_map(nodes, links):
     node_ids = {n["id"] for n in nodes}
     dependents = {n["id"]: [] for n in nodes}
@@ -107,7 +132,13 @@ def run_graph(nodes, links, on_event=None) -> dict:
         try:
             result = get_node_class(node["type"])().execute(**kwargs)
             outputs[node_id] = result
-            emit({"event": "node_completed", "node_id": node_id, "outputs": result})
+            emit(
+                {
+                    "event": "node_completed",
+                    "node_id": node_id,
+                    "outputs": _truncate_outputs_for_event(result),
+                }
+            )
         except Exception as exc:
             outputs[node_id] = ()
             emit({"event": "node_error", "node_id": node_id, "message": str(exc)})
