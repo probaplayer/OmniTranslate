@@ -135,3 +135,69 @@ def test_create_workspace_with_valid_hyphen_name():
     graph = workspace.open_workspace("test-123")
     assert graph["nodes"] == []
     assert graph["links"] == []
+
+
+def test_workspaces_root_default_is_absolute():
+    """WORKSPACES_ROOT must not depend on the process cwd.
+
+    Loaded as a separate module instance so the autouse monkeypatch on the
+    real `server.workspace` is left alone.
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("_ws_fresh", workspace.__file__)
+    fresh = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fresh)
+
+    assert fresh.WORKSPACES_ROOT.is_absolute()
+    assert fresh.WORKSPACES_ROOT.name == "workspaces"
+
+
+def test_create_workspace_with_trailing_newline_raises_not_oserror():
+    """`re.match` with `$` accepts a trailing newline; `fullmatch` must not."""
+    with pytest.raises(workspace.InvalidWorkspaceNameError):
+        workspace.create_workspace("ok\n")
+
+
+def test_invalid_name_raises_invalid_workspace_name_error():
+    with pytest.raises(workspace.InvalidWorkspaceNameError):
+        workspace.open_workspace("bad name")
+
+
+def test_corrupted_graph_raises_corrupt_workspace_error():
+    workspace.create_workspace("novel-a")
+    graph_path = workspace.WORKSPACES_ROOT / "novel-a" / "graph.json"
+    graph_path.write_text("{not valid json", encoding="utf-8")
+
+    with pytest.raises(workspace.CorruptWorkspaceError):
+        workspace.open_workspace("novel-a")
+
+
+def test_missing_workspace_raises_base_error_not_a_subclass():
+    with pytest.raises(workspace.WorkspaceError) as excinfo:
+        workspace.open_workspace("does-not-exist")
+    assert type(excinfo.value) is workspace.WorkspaceError
+
+
+def test_save_graph_rejects_shape_without_nodes_and_links():
+    workspace.create_workspace("novel-a")
+    workspace.save_graph("novel-a", {"nodes": [{"id": "1"}], "links": []})
+
+    with pytest.raises(workspace.InvalidGraphError):
+        workspace.save_graph("novel-a", {})
+
+    # The previously-saved valid graph must survive the rejected write.
+    assert workspace.open_workspace("novel-a")["nodes"] == [{"id": "1"}]
+
+
+def test_save_graph_rejects_non_dict_graph():
+    workspace.create_workspace("novel-a")
+    with pytest.raises(workspace.InvalidGraphError):
+        workspace.save_graph("novel-a", ["not", "a", "dict"])
+    assert workspace.open_workspace("novel-a")["nodes"] == []
+
+
+def test_list_workspaces_skips_names_failing_validation():
+    workspace.create_workspace("novel-a")
+    (workspace.WORKSPACES_ROOT / "hand made").mkdir()
+    assert workspace.list_workspaces() == ["novel-a"]
