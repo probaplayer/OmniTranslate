@@ -1,4 +1,5 @@
 import pytest
+from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
 
 from server import workspace
@@ -65,6 +66,60 @@ def test_open_missing_workspace_returns_404():
     assert response.status_code == 404
 
 
+def test_put_and_delete_missing_workspace_return_404():
+    client = TestClient(app)
+    assert (
+        client.put(
+            "/api/workspaces/does-not-exist/graph", json={"nodes": [], "links": []}
+        ).status_code
+        == 404
+    )
+    assert client.delete("/api/workspaces/does-not-exist").status_code == 404
+
+
+def test_create_workspace_with_invalid_name_returns_400():
+    client = TestClient(app)
+    response = client.post("/api/workspaces", json={"name": "My Novel"})
+    assert response.status_code == 400
+
+
+def test_get_put_delete_with_invalid_name_return_400():
+    client = TestClient(app)
+    bad = "My%20Novel"
+    assert client.get(f"/api/workspaces/{bad}").status_code == 400
+    assert (
+        client.put(
+            f"/api/workspaces/{bad}/graph", json={"nodes": [], "links": []}
+        ).status_code
+        == 400
+    )
+    assert client.delete(f"/api/workspaces/{bad}").status_code == 400
+
+
+def test_get_workspace_with_corrupted_graph_returns_422():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+    (workspace.WORKSPACES_ROOT / "novel-a" / "graph.json").write_text(
+        "{not valid json", encoding="utf-8"
+    )
+
+    response = client.get("/api/workspaces/novel-a")
+    assert response.status_code == 422
+
+
+def test_put_graph_with_bad_shape_returns_400_and_keeps_previous_graph():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+    client.put("/api/workspaces/novel-a/graph", json={"nodes": [{"id": "1"}], "links": []})
+
+    response = client.put("/api/workspaces/novel-a/graph", json={})
+    assert response.status_code == 400
+
+    reopened = client.get("/api/workspaces/novel-a")
+    assert reopened.status_code == 200
+    assert reopened.json()["nodes"] == [{"id": "1"}]
+
+
 def test_websocket_run_streams_events_and_writes_file(tmp_path):
     src = tmp_path / "in.txt"
     src.write_text("raw chapter", encoding="utf-8")
@@ -110,6 +165,55 @@ def test_websocket_run_reports_validation_error():
         event = websocket.receive_json()
 
     assert event["event"] == "validation_error"
+
+
+def test_websocket_rejects_disallowed_origin(tmp_path):
+    """A foreign page must not be able to drive the local server."""
+    src = tmp_path / "in.txt"
+    src.write_text("secret", encoding="utf-8")
+
+    client = TestClient(app)
+    graph = {
+        "nodes": [{"id": "1", "type": "LoadTextFile", "inputs": {"path": str(src)}}],
+        "links": [],
+    }
+
+    with pytest.raises(WebSocketDisconnect) as excinfo:
+        with client.websocket_connect(
+            "/ws/run/any", headers={"origin": "http://evil.example.com"}
+        ) as websocket:
+            websocket.send_json({"graph": graph})
+            websocket.receive_json()
+
+    assert excinfo.value.code == 1008
+
+
+def test_websocket_accepts_allowed_origin(tmp_path):
+    src = tmp_path / "in.txt"
+    src.write_text("raw chapter", encoding="utf-8")
+
+    client = TestClient(app)
+    graph = {
+        "nodes": [{"id": "1", "type": "LoadTextFile", "inputs": {"path": str(src)}}],
+        "links": [],
+    }
+
+    events = []
+    with client.websocket_connect(
+        "/ws/run/any", headers={"origin": "http://127.0.0.1:8000"}
+    ) as websocket:
+        websocket.send_json({"graph": graph})
+        while True:
+            event = websocket.receive_json()
+            events.append(event)
+            if event["event"] == "run_finished":
+                break
+
+    assert [e["event"] for e in events] == [
+        "node_started",
+        "node_completed",
+        "run_finished",
+    ]
 
 
 def test_websocket_run_reports_runtime_error_for_invalid_link_output(tmp_path):
