@@ -11,11 +11,6 @@ function registerDynamicNodeTypes(nodeMetadataList) {
         const config = spec[1] || {};
         this.addInput(inputName, inputType);
         this.properties[inputName] = config.default || "";
-        if (inputType === "STRING") {
-          this.addWidget("text", inputName, this.properties[inputName], (value) => {
-            this.properties[inputName] = value;
-          });
-        }
       }
 
       meta.return_names.forEach((name, idx) => {
