@@ -223,6 +223,14 @@ gọi `rag_store.add_chapter(...)` sau khi dịch xong).
   cài đặt lớn hơn đáng kể so với A1's dependency hiện tại — chấp nhận
   được vì đây là tool desktop chạy local, không phải service nhẹ).
 
+**Ghi chú triển khai (2026-09-07):** spec này ban đầu giả định
+`chromadb==0.5.20`/`sentence-transformers==3.3.1`, nhưng khi triển khai,
+máy dev đã có sẵn `chromadb==1.5.9`/`sentence-transformers==5.6.0` — plan
+đã ruling dùng version đã cài sẵn thay vì downgrade (API cốt lõi
+`PersistentClient`/`get_or_create_collection`/`upsert`/`query` không đổi
+giữa các version, đã verify trực tiếp). `requirements.txt` hiện pin đúng
+`1.5.9`/`5.6.0`, không phải các số ở trên.
+
 ## Cấu trúc thư mục dự kiến
 
 ```
