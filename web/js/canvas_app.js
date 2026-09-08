@@ -38,6 +38,7 @@ async function init() {
   registerDynamicNodeTypes(nodeMetadataList);
   initNodePalette(nodeMetadataList, graph, canvas, canvasEl);
   initInspectorPanel(nodeMetadataList, graph, canvas, workspaceName);
+  initLogConsole();
 
   const graphResponse = await fetch(`/api/workspaces/${encodeURIComponent(workspaceName)}`);
   if (!graphResponse.ok) {
@@ -75,6 +76,7 @@ function runGraph() {
 
   ws.onmessage = (message) => {
     const event = JSON.parse(message.data);
+    appendLogEntry(event);
     if (event.event === "run_finished") {
       setStatus(t("statusRunFinished"), "ok");
       return;
