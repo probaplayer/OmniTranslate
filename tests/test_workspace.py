@@ -201,3 +201,25 @@ def test_list_workspaces_skips_names_failing_validation():
     workspace.create_workspace("novel-a")
     (workspace.WORKSPACES_ROOT / "hand made").mkdir()
     assert workspace.list_workspaces() == ["novel-a"]
+
+
+def test_get_workspace_path_returns_path_under_workspace():
+    workspace.create_workspace("novel-a")
+
+    path = workspace.get_workspace_path("novel-a", "rag_index")
+
+    assert path == workspace.WORKSPACES_ROOT / "novel-a" / "rag_index"
+
+
+def test_get_workspace_path_validates_name():
+    with pytest.raises(workspace.InvalidWorkspaceNameError):
+        workspace.get_workspace_path("../evil", "agent.md")
+
+
+def test_create_workspace_seeds_agent_file():
+    workspace.create_workspace("novel-a")
+
+    agent_path = workspace.get_workspace_path("novel-a", "agent.md")
+
+    assert agent_path.exists()
+    assert "Dịch sang tiếng Việt" in agent_path.read_text(encoding="utf-8")

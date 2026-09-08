@@ -9,6 +9,11 @@ WORKSPACES_ROOT = Path(__file__).resolve().parent.parent / "workspaces"
 
 _DEFAULT_GRAPH = {"nodes": [], "links": []}
 
+_DEFAULT_AGENT_FILE = (
+    "# Hướng dẫn dịch\n\n"
+    "Dịch sang tiếng Việt, giữ văn phong tự nhiên, nhất quán tên riêng/thuật ngữ.\n"
+)
+
 _NAME_PATTERN = re.compile(r"[A-Za-z0-9_-]+")
 
 
@@ -51,6 +56,10 @@ def _workspace_dir(name: str) -> Path:
     return WORKSPACES_ROOT / name
 
 
+def get_workspace_path(name: str, *parts: str) -> Path:
+    return _workspace_dir(name).joinpath(*parts)
+
+
 def list_workspaces() -> list:
     if not WORKSPACES_ROOT.exists():
         return []
@@ -80,6 +89,7 @@ def create_workspace(name: str, source_lang: str = "", target_lang: str = "") ->
         encoding="utf-8",
     )
     (ws_dir / "graph.json").write_text(json.dumps(_DEFAULT_GRAPH), encoding="utf-8")
+    (ws_dir / "agent.md").write_text(_DEFAULT_AGENT_FILE, encoding="utf-8")
 
 
 def open_workspace(name: str) -> dict:
