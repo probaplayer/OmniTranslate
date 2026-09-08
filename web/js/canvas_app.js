@@ -37,6 +37,7 @@ async function init() {
   const nodeMetadataList = await nodesResponse.json();
   registerDynamicNodeTypes(nodeMetadataList);
   initNodePalette(nodeMetadataList, graph, canvas, canvasEl);
+  initInspectorPanel(nodeMetadataList, graph, canvas, workspaceName);
 
   const graphResponse = await fetch(`/api/workspaces/${encodeURIComponent(workspaceName)}`);
   if (!graphResponse.ok) {
