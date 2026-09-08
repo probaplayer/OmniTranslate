@@ -174,3 +174,34 @@ def test_node_completed_event_leaves_short_string_untouched():
     completed = next(e for e in events if e["event"] == "node_completed")
     assert completed["outputs"] == ("short!",)
     assert outputs["1"] == ("short!",)
+
+
+@register_node("_TestNeedsWorkspace")
+class _TestNeedsWorkspace(NodeBase):
+    CATEGORY = "Test"
+    NEEDS_WORKSPACE = True
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("out",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {}}
+
+    def execute(self, workspace_name):
+        return (workspace_name,)
+
+
+def test_run_graph_injects_workspace_name_for_flagged_nodes():
+    nodes = [{"id": "1", "type": "_TestNeedsWorkspace", "inputs": {}}]
+
+    outputs = run_graph(nodes, [], workspace_name="my-novel")
+
+    assert outputs["1"] == ("my-novel",)
+
+
+def test_run_graph_does_not_inject_workspace_name_for_normal_nodes():
+    nodes = [{"id": "1", "type": "_TestAdd", "inputs": {"value": "a"}}]
+
+    outputs = run_graph(nodes, [], workspace_name="my-novel")
+
+    assert outputs["1"] == ("a!",)

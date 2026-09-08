@@ -5,6 +5,7 @@ class NodeBase:
     CATEGORY = "Uncategorized"
     RETURN_TYPES: tuple = ()
     RETURN_NAMES: tuple = ()
+    NEEDS_WORKSPACE: bool = False
 
     @classmethod
     def INPUT_TYPES(cls) -> dict:

@@ -93,7 +93,7 @@ def validate_required_inputs(nodes, link_by_target) -> None:
                 )
 
 
-def run_graph(nodes, links, on_event=None) -> dict:
+def run_graph(nodes, links, on_event=None, workspace_name=None) -> dict:
     def emit(event):
         if on_event:
             on_event(event)
@@ -120,6 +120,7 @@ def run_graph(nodes, links, on_event=None) -> dict:
             continue
 
         node = node_by_id[node_id]
+        node_cls = get_node_class(node["type"])
         kwargs = dict(node.get("inputs", {}))
         for (target_node, target_input), (from_node, from_output) in link_by_target.items():
             if target_node != node_id:
@@ -127,10 +128,12 @@ def run_graph(nodes, links, on_event=None) -> dict:
             from_node_type = node_by_id[from_node]["type"]
             out_names = list(get_node_class(from_node_type).RETURN_NAMES)
             kwargs[target_input] = outputs[from_node][out_names.index(from_output)]
+        if node_cls.NEEDS_WORKSPACE:
+            kwargs["workspace_name"] = workspace_name
 
         emit({"event": "node_started", "node_id": node_id})
         try:
-            result = get_node_class(node["type"])().execute(**kwargs)
+            result = node_cls().execute(**kwargs)
             outputs[node_id] = result
             emit(
                 {
