@@ -117,6 +117,14 @@ def test_translate_node_calls_translate_chunk_with_composed_inputs():
     )
 
     assert result == ("bản dịch giả",)
+    # Verify system prompt contains agent instructions
+    assert provider.received_messages[0]["role"] == "system"
+    system_content = provider.received_messages[0]["content"]
+    assert "Dịch sang tiếng Việt." in system_content
+    # Verify system prompt contains RAG example data
+    assert "A knight traveled to the village." in system_content
+    assert "Một hiệp sĩ đã đến ngôi làng." in system_content
+    # Verify user message contains source text
     assert provider.received_messages[1] == {
         "role": "user",
         "content": "The knight drew his sword.",
@@ -134,3 +142,6 @@ def test_translate_node_works_without_rag_examples():
     )
 
     assert result == ("bản dịch giả",)
+    # Verify system prompt is just the agent instructions (no RAG section)
+    assert provider.received_messages[0]["role"] == "system"
+    assert provider.received_messages[0]["content"] == "Dịch sang tiếng Việt."
