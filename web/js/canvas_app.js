@@ -39,6 +39,7 @@ async function init() {
   initNodePalette(nodeMetadataList, graph, canvas, canvasEl);
   initInspectorPanel(nodeMetadataList, graph, canvas, workspaceName);
   initLogConsole();
+  initMinimap(graph, canvas, canvasEl);
 
   const graphResponse = await fetch(`/api/workspaces/${encodeURIComponent(workspaceName)}`);
   if (!graphResponse.ok) {
