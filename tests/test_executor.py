@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from server.executor import (
@@ -174,3 +176,129 @@ def test_node_completed_event_leaves_short_string_untouched():
     completed = next(e for e in events if e["event"] == "node_completed")
     assert completed["outputs"] == ("short!",)
     assert outputs["1"] == ("short!",)
+
+
+@register_node("_TestNeedsWorkspace")
+class _TestNeedsWorkspace(NodeBase):
+    CATEGORY = "Test"
+    NEEDS_WORKSPACE = True
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("out",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {}}
+
+    def execute(self, workspace_name):
+        return (workspace_name,)
+
+
+def test_run_graph_injects_workspace_name_for_flagged_nodes():
+    nodes = [{"id": "1", "type": "_TestNeedsWorkspace", "inputs": {}}]
+
+    outputs = run_graph(nodes, [], workspace_name="my-novel")
+
+    assert outputs["1"] == ("my-novel",)
+
+
+def test_run_graph_does_not_inject_workspace_name_for_normal_nodes():
+    nodes = [{"id": "1", "type": "_TestAdd", "inputs": {"value": "a"}}]
+
+    outputs = run_graph(nodes, [], workspace_name="my-novel")
+
+    assert outputs["1"] == ("a!",)
+
+
+class _NonSerializableThing:
+    """A plain object with no __repr__/json support -- mimics LLMProvider."""
+
+    def __init__(self, label):
+        self.label = label
+
+
+@register_node("_TestReturnsNonSerializable")
+class _TestReturnsNonSerializable(NodeBase):
+    CATEGORY = "Test"
+    RETURN_TYPES = ("OBJECT",)
+    RETURN_NAMES = ("out",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {}}
+
+    def execute(self):
+        return (_NonSerializableThing("provider-instance"),)
+
+
+def test_node_completed_event_replaces_non_serializable_value_with_placeholder():
+    nodes = [{"id": "1", "type": "_TestReturnsNonSerializable", "inputs": {}}]
+
+    events = []
+    outputs = run_graph(nodes, [], on_event=events.append)
+
+    completed = next(e for e in events if e["event"] == "node_completed")
+    streamed = completed["outputs"][0]
+    assert isinstance(streamed, str)
+    assert "_NonSerializableThing" in streamed
+
+
+def test_run_graph_returned_outputs_keep_real_non_serializable_object():
+    nodes = [{"id": "1", "type": "_TestReturnsNonSerializable", "inputs": {}}]
+
+    events = []
+    outputs = run_graph(nodes, [], on_event=events.append)
+
+    real_value = outputs["1"][0]
+    assert isinstance(real_value, _NonSerializableThing)
+    assert real_value.label == "provider-instance"
+
+
+class _SecretHolder:
+    """Stands in for a Provider output object, whose api_key is plaintext.
+
+    Its __repr__ deliberately renders the secret: if the event placeholder is
+    ever "improved" to use repr()/str() instead of type(value).__name__, this
+    class makes that leak visible immediately.
+    """
+
+    def __init__(self):
+        self.api_key = "sk-topsecret123"
+
+    def __repr__(self):
+        return f"_SecretHolder(api_key='{self.api_key}')"
+
+    __str__ = __repr__
+
+
+@register_node("_TestReturnsSecretHolder")
+class _TestReturnsSecretHolder(NodeBase):
+    CATEGORY = "Test"
+    RETURN_TYPES = ("OBJECT",)
+    RETURN_NAMES = ("out",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {}}
+
+    def execute(self):
+        return (_SecretHolder(),)
+
+
+def test_node_completed_event_placeholder_never_leaks_secrets_via_repr():
+    """The streamed placeholder must name the type only, never the value.
+
+    node_completed events go out over the websocket to every connected client,
+    and node outputs can carry secrets (a Provider node's api_key).
+    """
+    nodes = [{"id": "1", "type": "_TestReturnsSecretHolder", "inputs": {}}]
+
+    events = []
+    outputs = run_graph(nodes, [], on_event=events.append)
+
+    completed = next(e for e in events if e["event"] == "node_completed")
+    assert completed["outputs"] == ("<_SecretHolder>",)
+    # Nothing anywhere in the event carries the secret, however it is rendered.
+    assert "sk-topsecret123" not in json.dumps(completed, default=repr)
+
+    # The real object -- key intact -- still reaches downstream nodes.
+    assert outputs["1"][0].api_key == "sk-topsecret123"

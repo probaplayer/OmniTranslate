@@ -1,3 +1,4 @@
+import json
 from collections import deque
 
 from server.node_registry import get_node_class
@@ -17,6 +18,18 @@ def _truncate_outputs_for_event(result):
     on every run. Only the emitted event is trimmed -- run_graph's returned
     outputs dict keeps the full values, since downstream nodes and callers
     need them intact.
+
+    Some node outputs (e.g. an LLMProvider instance, or a list of dataclass
+    instances) aren't JSON-serializable at all. Those are replaced with a
+    short placeholder string naming their type so that streaming the event
+    over the websocket doesn't raise -- again, only in the event payload;
+    the real objects still flow through run_graph's returned outputs dict.
+
+    That placeholder MUST stay `type(value).__name__` and never `repr(value)`
+    or `str(value)`: node outputs can carry secrets (a Provider node's output
+    object holds a plaintext `api_key` attribute), and whatever this function
+    returns is broadcast over the websocket to any connected client, so a
+    future `__repr__` that renders its fields would leak the key on every run.
     """
     if not isinstance(result, (tuple, list)):
         return result
@@ -28,7 +41,12 @@ def _truncate_outputs_for_event(result):
                 + f"...(truncated, {len(value)} chars total)"
             )
         else:
-            trimmed.append(value)
+            try:
+                json.dumps(value)
+            except (TypeError, ValueError):
+                trimmed.append(f"<{type(value).__name__}>")
+            else:
+                trimmed.append(value)
     return tuple(trimmed)
 
 
@@ -93,7 +111,7 @@ def validate_required_inputs(nodes, link_by_target) -> None:
                 )
 
 
-def run_graph(nodes, links, on_event=None) -> dict:
+def run_graph(nodes, links, on_event=None, workspace_name=None) -> dict:
     def emit(event):
         if on_event:
             on_event(event)
@@ -120,6 +138,7 @@ def run_graph(nodes, links, on_event=None) -> dict:
             continue
 
         node = node_by_id[node_id]
+        node_cls = get_node_class(node["type"])
         kwargs = dict(node.get("inputs", {}))
         for (target_node, target_input), (from_node, from_output) in link_by_target.items():
             if target_node != node_id:
@@ -127,10 +146,12 @@ def run_graph(nodes, links, on_event=None) -> dict:
             from_node_type = node_by_id[from_node]["type"]
             out_names = list(get_node_class(from_node_type).RETURN_NAMES)
             kwargs[target_input] = outputs[from_node][out_names.index(from_output)]
+        if node_cls.NEEDS_WORKSPACE:
+            kwargs["workspace_name"] = workspace_name
 
         emit({"event": "node_started", "node_id": node_id})
         try:
-            result = get_node_class(node["type"])().execute(**kwargs)
+            result = node_cls().execute(**kwargs)
             outputs[node_id] = result
             emit(
                 {
