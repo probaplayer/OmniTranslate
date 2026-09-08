@@ -1,4 +1,4 @@
-from translation_core import ProviderConfig, RAGStore, create_provider, load_agent_file, save_agent_file
+from translation_core import ProviderConfig, RAGStore, create_provider, load_agent_file, save_agent_file, translate_chunk
 
 from server import workspace
 from server.node_registry import NodeBase, register_node
@@ -103,3 +103,27 @@ class SaveToRAG(NodeBase):
         store = RAGStore(workspace.get_workspace_path(workspace_name, "rag_index"))
         store.add_chapter(chapter_id, source_text, translated_text)
         return ()
+
+
+@register_node("Translate")
+class Translate(NodeBase):
+    CATEGORY = "Translation"
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("translated_text",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "provider": ("PROVIDER", {}),
+                "agent_instructions": ("STRING", {"default": ""}),
+                "source_text": ("STRING", {"default": ""}),
+            },
+            "optional": {"rag_examples": ("RAG_EXAMPLES", {})},
+        }
+
+    def execute(
+        self, provider, agent_instructions: str, source_text: str, rag_examples=None
+    ) -> tuple:
+        result = translate_chunk(provider, agent_instructions, rag_examples or [], source_text)
+        return (result,)

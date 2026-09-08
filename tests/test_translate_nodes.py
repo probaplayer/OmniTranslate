@@ -1,5 +1,6 @@
 import pytest
 
+from translation_core import LLMProvider, RAGExample
 from translation_core.providers.openai_compatible import OpenAICompatibleProvider
 
 from server import workspace
@@ -85,3 +86,51 @@ def test_rag_query_on_empty_store_returns_empty_list():
     result = node.execute(workspace_name="novel-a", text="anything")
 
     assert result == ([],)
+
+
+class _RecordingProvider(LLMProvider):
+    def __init__(self):
+        self.received_messages = None
+
+    def complete(self, messages, **kwargs):
+        self.received_messages = messages
+        return "bản dịch giả"
+
+
+def test_translate_node_calls_translate_chunk_with_composed_inputs():
+    node = get_node_class("Translate")()
+    provider = _RecordingProvider()
+    rag_examples = [
+        RAGExample(
+            chapter_id="ch1",
+            source_text="A knight traveled to the village.",
+            translated_text="Một hiệp sĩ đã đến ngôi làng.",
+            distance=0.1,
+        )
+    ]
+
+    result = node.execute(
+        provider=provider,
+        agent_instructions="Dịch sang tiếng Việt.",
+        source_text="The knight drew his sword.",
+        rag_examples=rag_examples,
+    )
+
+    assert result == ("bản dịch giả",)
+    assert provider.received_messages[1] == {
+        "role": "user",
+        "content": "The knight drew his sword.",
+    }
+
+
+def test_translate_node_works_without_rag_examples():
+    node = get_node_class("Translate")()
+    provider = _RecordingProvider()
+
+    result = node.execute(
+        provider=provider,
+        agent_instructions="Dịch sang tiếng Việt.",
+        source_text="Hello world.",
+    )
+
+    assert result == ("bản dịch giả",)
