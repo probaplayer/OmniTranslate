@@ -40,11 +40,24 @@ def _is_valid_workspace_name(name: str) -> bool:
     path traversal, absolute paths, drive letters, and other exploits.
     `fullmatch` (not `match`) is required: `match` with a `$` anchor also
     accepts a trailing newline, which would then blow up in `mkdir`.
+
+    Non-strings are simply invalid rather than a TypeError from the regex, so
+    this stays a total predicate for any caller.
     """
+    if not isinstance(name, str):
+        return False
     return _NAME_PATTERN.fullmatch(name) is not None
 
 
 def _validate_workspace_name(name: str) -> None:
+    # A non-string (most plausibly None, from a run_graph caller that omitted
+    # workspace_name while the graph contains a NEEDS_WORKSPACE node) used to
+    # reach the regex and surface as a raw "expected string or bytes-like
+    # object" TypeError. Name the actual problem instead.
+    if not isinstance(name, str):
+        raise InvalidWorkspaceNameError(
+            f"Workspace name must be a string, got {type(name).__name__}"
+        )
     if not _is_valid_workspace_name(name):
         raise InvalidWorkspaceNameError(
             f"Workspace name must contain only letters, digits, hyphen, and underscore; got '{name}'"

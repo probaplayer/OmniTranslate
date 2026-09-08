@@ -223,3 +223,25 @@ def test_create_workspace_seeds_agent_file():
 
     assert agent_path.exists()
     assert "Dịch sang tiếng Việt" in agent_path.read_text(encoding="utf-8")
+
+
+def test_validate_workspace_name_rejects_none_with_own_error():
+    """None must not reach the regex and surface as a raw TypeError.
+
+    run_graph defaults workspace_name to None, so a caller that omits it while
+    the graph holds a NEEDS_WORKSPACE node lands here.
+    """
+    with pytest.raises(workspace.InvalidWorkspaceNameError) as exc_info:
+        workspace._validate_workspace_name(None)
+    assert "must be a string" in str(exc_info.value)
+    assert "NoneType" in str(exc_info.value)
+
+
+def test_get_workspace_path_with_none_raises_invalid_name_not_type_error():
+    with pytest.raises(workspace.InvalidWorkspaceNameError):
+        workspace.get_workspace_path(None, "agent.md")
+
+
+def test_is_valid_workspace_name_is_total_for_non_strings():
+    assert workspace._is_valid_workspace_name(None) is False
+    assert workspace._is_valid_workspace_name(42) is False
