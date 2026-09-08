@@ -118,6 +118,21 @@ async def ws_run(websocket: WebSocket, workspace_name: str):
     data = await websocket.receive_json()
     graph = data["graph"]
 
+    # Nothing downstream checks that the workspace named in the URL exists, and
+    # the NEEDS_WORKSPACE nodes happily create what they need on demand
+    # (chromadb.PersistentClient auto-creates parent directories), so a typo'd
+    # name would materialise an orphaned workspaces/<name>/rag_index/ with no
+    # config.json or graph.json -- which then shows up in the workspace picker
+    # and errors when clicked. Refuse the run before the worker thread (and any
+    # filesystem access) starts. open_workspace is the same existence check the
+    # HTTP endpoints use; it also rejects invalid/traversing names.
+    try:
+        workspace.open_workspace(workspace_name)
+    except workspace.WorkspaceError as exc:
+        await websocket.send_json({"event": "validation_error", "message": str(exc)})
+        await websocket.close()
+        return
+
     event_queue: "queue.Queue" = queue.Queue()
 
     def on_event(event):
@@ -139,13 +154,36 @@ async def ws_run(websocket: WebSocket, workspace_name: str):
     threading.Thread(target=worker, daemon=True).start()
 
     loop = asyncio.get_running_loop()
-    while True:
-        event = await loop.run_in_executor(None, event_queue.get)
-        if event is None:
-            break
-        await websocket.send_json(event)
-
-    await websocket.close()
+    try:
+        while True:
+            event = await loop.run_in_executor(None, event_queue.get)
+            if event is None:
+                break
+            try:
+                await websocket.send_json(event)
+            except Exception as exc:
+                # A send that raises (an event that slipped past executor's
+                # serialization guard, or a client that went away) must not
+                # kill this coroutine outright: that would skip the close()
+                # below and leave the client hanging forever, waiting for a
+                # run_finished it can never receive. Make one best-effort
+                # attempt to say why, then stop draining. The worker thread is
+                # a daemon and unaffected -- it finishes its run either way.
+                try:
+                    await websocket.send_json(
+                        {
+                            "event": "runtime_error",
+                            "message": f"Failed to send event: {exc}",
+                        }
+                    )
+                except Exception:
+                    pass
+                break
+    finally:
+        try:
+            await websocket.close()
+        except Exception:
+            pass
 
 
 app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
