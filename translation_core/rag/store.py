@@ -28,6 +28,12 @@ class RAGStore:
         )
 
     def add_chapter(self, chapter_id: str, source_text: str, translated_text: str) -> None:
+        # chromadb silently DROPS the whole metadata dict when a value is not a
+        # primitive (e.g. None), producing a row whose metadata reads back as
+        # None and breaks every query that ranks alongside it. Reject early.
+        if not isinstance(translated_text, str):
+            raise TypeError("translated_text must be a str")
+
         self._collection.upsert(
             ids=[chapter_id],
             documents=[source_text],
@@ -35,6 +41,9 @@ class RAGStore:
         )
 
     def query(self, text: str, top_k: int = 3) -> list[RAGExample]:
+        if top_k <= 0:
+            return []
+
         if self._collection.count() == 0:
             return []
 
@@ -51,7 +60,10 @@ class RAGStore:
                 RAGExample(
                     chapter_id=chapter_id,
                     source_text=source_text,
-                    translated_text=metadata["translated_text"],
+                    # A row written before the add_chapter guard existed (or by
+                    # some other code path) can come back with metadata None;
+                    # degrade to "" instead of crashing the whole result set.
+                    translated_text=(metadata or {}).get("translated_text", ""),
                     distance=distance,
                 )
             )

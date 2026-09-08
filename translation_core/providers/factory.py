@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from translation_core.providers.base import LLMProvider, ProviderError
 from translation_core.providers.openai_compatible import OpenAICompatibleProvider
@@ -8,7 +8,9 @@ from translation_core.providers.openai_compatible import OpenAICompatibleProvide
 class ProviderConfig:
     type: str
     base_url: str
-    api_key: str
+    # repr=False so a traceback or diagnostic payload that reprs a config
+    # never leaks the key in cleartext.
+    api_key: str = field(repr=False)
     model: str
 
 
