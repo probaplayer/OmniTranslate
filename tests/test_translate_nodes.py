@@ -53,3 +53,35 @@ def test_save_agent_file_node_overwrites_content():
     assert result == ()
     saved = workspace.get_workspace_path("novel-a", "agent.md").read_text(encoding="utf-8")
     assert saved == "Nội dung mới"
+
+
+def test_save_to_rag_and_query_returns_saved_chapter():
+    workspace.create_workspace("novel-a")
+    save_node = get_node_class("SaveToRAG")()
+    save_node.execute(
+        workspace_name="novel-a",
+        chapter_id="ch1",
+        source_text="The dragon knight traveled to the misty mountain village.",
+        translated_text="Hiệp sĩ rồng du hành đến ngôi làng núi mù sương.",
+    )
+
+    query_node = get_node_class("RAGQuery")()
+    result = query_node.execute(
+        workspace_name="novel-a",
+        text="A knight rides toward a mountain village shrouded in fog.",
+        top_k="1",
+    )
+
+    examples = result[0]
+    assert len(examples) == 1
+    assert examples[0].chapter_id == "ch1"
+    assert examples[0].translated_text == "Hiệp sĩ rồng du hành đến ngôi làng núi mù sương."
+
+
+def test_rag_query_on_empty_store_returns_empty_list():
+    workspace.create_workspace("novel-a")
+    node = get_node_class("RAGQuery")()
+
+    result = node.execute(workspace_name="novel-a", text="anything")
+
+    assert result == ([],)
