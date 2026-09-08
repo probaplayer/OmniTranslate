@@ -1,3 +1,4 @@
+import json
 from collections import deque
 
 from server.node_registry import get_node_class
@@ -17,6 +18,12 @@ def _truncate_outputs_for_event(result):
     on every run. Only the emitted event is trimmed -- run_graph's returned
     outputs dict keeps the full values, since downstream nodes and callers
     need them intact.
+
+    Some node outputs (e.g. an LLMProvider instance, or a list of dataclass
+    instances) aren't JSON-serializable at all. Those are replaced with a
+    short placeholder string naming their type so that streaming the event
+    over the websocket doesn't raise -- again, only in the event payload;
+    the real objects still flow through run_graph's returned outputs dict.
     """
     if not isinstance(result, (tuple, list)):
         return result
@@ -28,7 +35,12 @@ def _truncate_outputs_for_event(result):
                 + f"...(truncated, {len(value)} chars total)"
             )
         else:
-            trimmed.append(value)
+            try:
+                json.dumps(value)
+            except (TypeError, ValueError):
+                trimmed.append(f"<{type(value).__name__}>")
+            else:
+                trimmed.append(value)
     return tuple(trimmed)
 
 

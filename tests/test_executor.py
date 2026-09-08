@@ -205,3 +205,47 @@ def test_run_graph_does_not_inject_workspace_name_for_normal_nodes():
     outputs = run_graph(nodes, [], workspace_name="my-novel")
 
     assert outputs["1"] == ("a!",)
+
+
+class _NonSerializableThing:
+    """A plain object with no __repr__/json support -- mimics LLMProvider."""
+
+    def __init__(self, label):
+        self.label = label
+
+
+@register_node("_TestReturnsNonSerializable")
+class _TestReturnsNonSerializable(NodeBase):
+    CATEGORY = "Test"
+    RETURN_TYPES = ("OBJECT",)
+    RETURN_NAMES = ("out",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {}}
+
+    def execute(self):
+        return (_NonSerializableThing("provider-instance"),)
+
+
+def test_node_completed_event_replaces_non_serializable_value_with_placeholder():
+    nodes = [{"id": "1", "type": "_TestReturnsNonSerializable", "inputs": {}}]
+
+    events = []
+    outputs = run_graph(nodes, [], on_event=events.append)
+
+    completed = next(e for e in events if e["event"] == "node_completed")
+    streamed = completed["outputs"][0]
+    assert isinstance(streamed, str)
+    assert "_NonSerializableThing" in streamed
+
+
+def test_run_graph_returned_outputs_keep_real_non_serializable_object():
+    nodes = [{"id": "1", "type": "_TestReturnsNonSerializable", "inputs": {}}]
+
+    events = []
+    outputs = run_graph(nodes, [], on_event=events.append)
+
+    real_value = outputs["1"][0]
+    assert isinstance(real_value, _NonSerializableThing)
+    assert real_value.label == "provider-instance"
