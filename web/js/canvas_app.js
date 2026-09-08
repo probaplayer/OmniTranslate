@@ -31,7 +31,7 @@ function colorForEvent(eventName) {
 async function init() {
   const nodesResponse = await fetch("/api/nodes");
   if (!nodesResponse.ok) {
-    setStatus(`Lỗi tải danh sách node: ${nodesResponse.status}`, "error");
+    setStatus(`${t("statusLoadNodesError")}${nodesResponse.status}`, "error");
     return;
   }
   const nodeMetadataList = await nodesResponse.json();
@@ -40,7 +40,7 @@ async function init() {
 
   const graphResponse = await fetch(`/api/workspaces/${encodeURIComponent(workspaceName)}`);
   if (!graphResponse.ok) {
-    setStatus(`Lỗi tải workspace: ${graphResponse.status}`, "error");
+    setStatus(`${t("statusLoadWorkspaceError")}${graphResponse.status}`, "error");
     return;
   }
   const savedGraph = await graphResponse.json();
@@ -58,10 +58,10 @@ async function saveGraph() {
     body: JSON.stringify(graph.serialize()),
   });
   if (!response.ok) {
-    setStatus(`Lỗi lưu: ${response.status}`, "error");
+    setStatus(`${t("statusSaveError")}${response.status}`, "error");
     return;
   }
-  setStatus("Đã lưu", "ok");
+  setStatus(t("statusSaved"), "ok");
 }
 
 function runGraph() {
@@ -70,20 +70,20 @@ function runGraph() {
 
   ws.onopen = () => ws.send(JSON.stringify({ graph: payload }));
 
-  ws.onerror = () => setStatus("Lỗi kết nối WebSocket", "error");
+  ws.onerror = () => setStatus(t("statusWsError"), "error");
 
   ws.onmessage = (message) => {
     const event = JSON.parse(message.data);
     if (event.event === "run_finished") {
-      setStatus("Hoàn tất", "ok");
+      setStatus(t("statusRunFinished"), "ok");
       return;
     }
     if (event.event === "validation_error") {
-      setStatus(`Lỗi: ${event.message}`, "error");
+      setStatus(`${t("statusValidationError")}${event.message}`, "error");
       return;
     }
     if (event.event === "runtime_error") {
-      setStatus(`Lỗi thực thi: ${event.message}`, "error");
+      setStatus(`${t("statusRuntimeError")}${event.message}`, "error");
       return;
     }
     const node = graph.getNodeById(Number(event.node_id));
@@ -97,5 +97,7 @@ function runGraph() {
 
 document.getElementById("run-button").addEventListener("click", runGraph);
 document.getElementById("save-button").addEventListener("click", saveGraph);
+document.getElementById("lang-vi-button").addEventListener("click", () => setLang("vi"));
+document.getElementById("lang-en-button").addEventListener("click", () => setLang("en"));
 
 init();

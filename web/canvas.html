@@ -65,14 +65,18 @@
     <aside id="node-palette"></aside>
     <div id="canvas-column">
       <div id="toolbar">
-        <a href="/index.html">&larr; Workspaces</a>
-        <button id="run-button">Run</button>
-        <button id="save-button">Save</button>
+        <a href="/index.html" data-i18n="backToWorkspaces">&larr; Workspaces</a>
+        <button id="run-button" data-i18n="runAllButton">Run</button>
+        <button id="save-button" data-i18n="saveButton">Save</button>
         <span id="status" class="status-info"></span>
+        <span style="flex: 1;"></span>
+        <button id="lang-vi-button">VI</button>
+        <button id="lang-en-button">EN</button>
       </div>
       <canvas id="graph-canvas"></canvas>
     </div>
   </div>
+  <script src="/js/i18n.js"></script>
   <script src="/js/litegraph.js"></script>
   <script src="/js/nodegen.js"></script>
   <script src="/js/node_palette.js"></script>

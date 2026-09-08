@@ -15,7 +15,7 @@ async function loadWorkspaces() {
     }
   } catch (error) {
     const errorEl = document.getElementById("picker-error");
-    errorEl.textContent = "Không thể tải danh sách workspace — kiểm tra server có đang chạy không.";
+    errorEl.textContent = t("loadWorkspacesError");
   }
 }
 
@@ -38,16 +38,16 @@ async function createWorkspace(event) {
     if (!response.ok) {
       try {
         const body = await response.json();
-        errorEl.textContent = body.detail || "Không tạo được workspace";
+        errorEl.textContent = body.detail || t("createWorkspaceGenericError");
       } catch {
-        errorEl.textContent = "Không tạo được workspace — kiểm tra server.";
+        errorEl.textContent = t("createWorkspaceServerError");
       }
       return;
     }
 
     window.location.href = `/canvas.html?workspace=${encodeURIComponent(name)}`;
   } catch (error) {
-    errorEl.textContent = "Không tạo được workspace — kiểm tra server.";
+    errorEl.textContent = t("createWorkspaceServerError");
   }
 }
 

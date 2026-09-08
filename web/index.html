@@ -10,10 +10,10 @@
 </head>
 <body>
   <main class="picker">
-    <h1>Chọn workspace</h1>
+    <h1 data-i18n="pickerTitle">Chọn workspace</h1>
     <ul id="workspace-list" class="workspace-list"></ul>
 
-    <h2>Tạo workspace mới</h2>
+    <h2 data-i18n="createWorkspaceTitle">Tạo workspace mới</h2>
     <form id="create-form">
       <!-- The hyphen in `pattern` is escaped so the character class stays
            valid when the browser compiles the pattern with the `v` flag: an
@@ -22,21 +22,23 @@
            as the backend's allowlist. -->
       <input
         id="new-name"
+        data-i18n-placeholder="namePlaceholder"
         placeholder="Tên workspace (vd: truyen-a)"
         pattern="[A-Za-z0-9_\-]+"
         title="Chỉ dùng chữ cái, chữ số, dấu gạch ngang (-) và gạch dưới (_)"
         required
       />
-      <input id="new-source-lang" placeholder="Ngôn ngữ nguồn (vd: ja)" />
-      <input id="new-target-lang" placeholder="Ngôn ngữ đích (vd: vi)" />
-      <button type="submit">Tạo</button>
+      <input id="new-source-lang" data-i18n-placeholder="sourceLangPlaceholder" placeholder="Ngôn ngữ nguồn (vd: ja)" />
+      <input id="new-target-lang" data-i18n-placeholder="targetLangPlaceholder" placeholder="Ngôn ngữ đích (vd: vi)" />
+      <button type="submit" data-i18n="createButton">Tạo</button>
     </form>
-    <p class="hint">
+    <p class="hint" data-i18n="nameHint">
       Tên workspace chỉ được chứa chữ cái, chữ số, dấu gạch ngang (-) và gạch
       dưới (_) — không có dấu cách hay ký tự đặc biệt.
     </p>
     <p id="picker-error" class="error"></p>
   </main>
+  <script src="/js/i18n.js"></script>
   <script src="/js/workspace_picker.js"></script>
 </body>
 </html>
