@@ -11,6 +11,7 @@ from server import workspace
 from server.executor import GraphValidationError, run_graph
 from server.node_registry import list_node_metadata
 from server.nodes import utility  # noqa: F401  (triggers registration)
+from server.nodes import translate as translate_nodes  # noqa: F401  (triggers registration)
 
 app = FastAPI()
 
