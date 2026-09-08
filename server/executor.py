@@ -24,6 +24,12 @@ def _truncate_outputs_for_event(result):
     short placeholder string naming their type so that streaming the event
     over the websocket doesn't raise -- again, only in the event payload;
     the real objects still flow through run_graph's returned outputs dict.
+
+    That placeholder MUST stay `type(value).__name__` and never `repr(value)`
+    or `str(value)`: node outputs can carry secrets (a Provider node's output
+    object holds a plaintext `api_key` attribute), and whatever this function
+    returns is broadcast over the websocket to any connected client, so a
+    future `__repr__` that renders its fields would leak the key on every run.
     """
     if not isinstance(result, (tuple, list)):
         return result
