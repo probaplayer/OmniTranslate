@@ -1,21 +1,30 @@
 :root {
-  --bg: #1e1f26;
-  --bg-elevated: #262832;
-  --bg-hover: #2f313d;
-  --border: #3a3d4a;
-  --text: #e8e8ec;
-  --text-muted: #9a9cae;
-  --accent: #6c8cff;
-  --accent-hover: #86a0ff;
-  --danger: #ff6b6b;
-  --success: #4caf82;
+  --bg: #101216;
+  --bg-elevated: #14161b;
+  --bg-surface: #1a1d23;
+  --bg-input: #1c1f25;
+  --bg-hover: #1e2229;
+  --border: #2a2f37;
+  --border-soft: #23272e;
+  --text: #e9e7e2;
+  --text-muted: #9aa1ab;
+  --text-dim: #767d88;
+  --text-faint: #6f7681;
+  --accent: #d9a44c;
+  --accent-hover: #efc57e;
+  --accent-text: #16181d;
+  --danger: #d97070;
+  --success: #7fb98a;
+  --status-idle: #6b7280;
   --radius: 8px;
+  --font-ui: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Consolas", monospace;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
 }
 
 /* Workspace picker */
@@ -84,7 +93,7 @@ button {
 .picker input {
   flex: 1;
   min-width: 140px;
-  background: var(--bg);
+  background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text);
@@ -101,7 +110,7 @@ button {
   background: var(--accent);
   border: none;
   border-radius: 6px;
-  color: #10111a;
+  color: var(--accent-text);
   cursor: pointer;
   font-weight: 600;
   padding: 8px 16px;
