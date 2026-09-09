@@ -94,7 +94,65 @@ function createBlankTab() {
   activateTab(createTabForGraph(null, new LGraph()));
 }
 
+async function openWorkspaceAsTab(name) {
+  const existing = tabs.find((t) => t.workspaceName === name);
+  if (existing) {
+    switchToTab(existing.id);
+    return;
+  }
+  const response = await fetch(`/api/workspaces/${encodeURIComponent(name)}`);
+  const graph = new LGraph();
+  if (response.ok) {
+    const savedGraph = await response.json();
+    if (savedGraph.nodes && savedGraph.nodes.length) {
+      graph.configure(savedGraph);
+      for (const node of graph._nodes) {
+        const minHeight = node.computeSize()[1];
+        if (node.size[1] < minHeight) node.size[1] = minHeight;
+      }
+    }
+  } else {
+    setStatus(`${t("statusLoadWorkspaceError")}${response.status}`, "error");
+    return;
+  }
+  activateTab(createTabForGraph(name, graph));
+}
+
+async function toggleOpenWorkspaceMenu() {
+  const existingMenu = document.getElementById("open-workspace-menu");
+  if (existingMenu) {
+    existingMenu.remove();
+    return;
+  }
+  const response = await fetch("/api/workspaces");
+  const data = await response.json();
+  const openNames = new Set(tabs.map((t) => t.workspaceName).filter(Boolean));
+  const available = data.workspaces.filter((name) => !openNames.has(name));
+
+  const menu = document.createElement("div");
+  menu.id = "open-workspace-menu";
+  if (available.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "open-workspace-menu-empty";
+    empty.textContent = t("noOtherWorkspaces");
+    menu.appendChild(empty);
+  } else {
+    for (const name of available) {
+      const item = document.createElement("div");
+      item.className = "open-workspace-menu-item";
+      item.textContent = name;
+      item.addEventListener("click", () => {
+        menu.remove();
+        openWorkspaceAsTab(name);
+      });
+      menu.appendChild(item);
+    }
+  }
+  document.getElementById("open-workspace-button").parentElement.appendChild(menu);
+}
+
 document.getElementById("new-tab-button").addEventListener("click", createBlankTab);
+document.getElementById("open-workspace-button").addEventListener("click", toggleOpenWorkspaceMenu);
 
 function activateTab(tab) {
   activeTabId = tab.id;

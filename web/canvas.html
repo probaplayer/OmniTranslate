@@ -133,6 +133,42 @@
       flex-shrink: 0;
     }
     #new-tab-button:hover { border-color: var(--accent); color: var(--accent); }
+    #open-workspace-button {
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      color: var(--text-faint);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 5px 10px;
+      flex-shrink: 0;
+    }
+    #open-workspace-button:hover { border-color: var(--accent); color: var(--accent); }
+    #open-workspace-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 180px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 4px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+      z-index: 10;
+    }
+    .open-workspace-menu-item {
+      padding: 7px 10px;
+      font-size: 12.5px;
+      color: var(--text);
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .open-workspace-menu-item:hover { background: var(--bg-hover); }
+    .open-workspace-menu-empty {
+      padding: 7px 10px;
+      font-size: 11.5px;
+      color: var(--text-faint);
+    }
 
     #canvas-area { position: relative; flex: 1; min-height: 0; }
     #graph-canvas { display: block; width: 100%; height: 100%; }
@@ -314,6 +350,9 @@
       </div>
       <div id="workspace-tabs">
         <button id="new-tab-button" data-i18n-title="newTabButton" title="+ Workspace mới">+</button>
+        <div style="position: relative;">
+          <button id="open-workspace-button" data-i18n="openWorkspaceButton">Mở workspace...</button>
+        </div>
       </div>
       <div id="canvas-area">
         <canvas id="graph-canvas"></canvas>

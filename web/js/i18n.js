@@ -49,6 +49,8 @@ const STR = {
     stRunning: "Đang chạy",
     stDone: "Xong",
     stError: "Lỗi",
+    openWorkspaceButton: "Mở workspace...",
+    noOtherWorkspaces: "Không có workspace nào khác",
   },
   en: {
     pickerTitle: "Select workspace",
@@ -100,6 +102,8 @@ const STR = {
     stRunning: "Running",
     stDone: "Done",
     stError: "Error",
+    openWorkspaceButton: "Open workspace...",
+    noOtherWorkspaces: "No other workspaces",
   },
 };
 
