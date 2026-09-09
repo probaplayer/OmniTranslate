@@ -32,11 +32,76 @@ function createTabForGraph(workspaceName, graph) {
   return tab;
 }
 
+function renderTabBar() {
+  const bar = document.getElementById("workspace-tabs");
+  if (!bar) return;
+  bar.querySelectorAll(".workspace-tab").forEach((el) => el.remove());
+
+  const newTabButton = document.getElementById("new-tab-button");
+  for (const tab of tabs) {
+    const pill = document.createElement("div");
+    pill.className = "workspace-tab" + (tab.id === activeTabId ? " active" : "");
+    pill.addEventListener("click", () => switchToTab(tab.id));
+
+    if (tab.dirty) {
+      const dot = document.createElement("span");
+      dot.className = "workspace-tab-dirty-dot";
+      pill.appendChild(dot);
+    }
+
+    const label = document.createElement("span");
+    label.textContent = tab.workspaceName || t("untitledWorkspace");
+    pill.appendChild(label);
+
+    const closeButton = document.createElement("button");
+    closeButton.className = "workspace-tab-close";
+    closeButton.textContent = "×";
+    closeButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      closeTab(tab.id);
+    });
+    pill.appendChild(closeButton);
+
+    bar.insertBefore(pill, newTabButton);
+  }
+}
+
+function switchToTab(id) {
+  const tab = tabs.find((t) => t.id === id);
+  if (!tab) return;
+  activateTab(tab);
+}
+
+function closeTab(id) {
+  const tab = tabs.find((t) => t.id === id);
+  if (!tab) return;
+  if (tab.dirty && !window.confirm(t("confirmDiscardTab"))) return;
+
+  const index = tabs.indexOf(tab);
+  tabs.splice(index, 1);
+
+  if (tabs.length === 0) {
+    activateTab(createTabForGraph(null, new LGraph()));
+  } else if (tab.id === activeTabId) {
+    const neighbor = tabs[index] || tabs[index - 1];
+    activateTab(neighbor);
+  } else {
+    renderTabBar();
+  }
+}
+
+function createBlankTab() {
+  activateTab(createTabForGraph(null, new LGraph()));
+}
+
+document.getElementById("new-tab-button").addEventListener("click", createBlankTab);
+
 function activateTab(tab) {
   activeTabId = tab.id;
   canvas.setGraph(tab.graph);
   if (typeof clearInspectorSelection === "function") clearInspectorSelection();
   canvas.setDirty(true, true);
+  renderTabBar();
 }
 
 async function saveActiveTab() {
@@ -84,6 +149,7 @@ async function saveActiveTab() {
   }
   tab.dirty = false;
   setStatus(t("statusSaved"), "ok");
+  renderTabBar();
 }
 
 async function initWorkspaceTabs() {

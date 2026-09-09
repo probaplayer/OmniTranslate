@@ -77,6 +77,63 @@
     #toolbar a { color: var(--text-dim); text-decoration: none; }
     #toolbar a:hover { color: var(--text); }
 
+    #workspace-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-soft);
+      padding: 6px 12px;
+      overflow-x: auto;
+    }
+    .workspace-tab {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 8px 5px 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .workspace-tab.active {
+      border-color: var(--accent);
+      color: var(--text);
+      background: var(--bg-hover);
+    }
+    .workspace-tab-dirty-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .workspace-tab-close {
+      background: transparent;
+      border: none;
+      color: var(--text-faint);
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      padding: 0 2px;
+    }
+    .workspace-tab-close:hover { color: var(--danger); }
+    #new-tab-button {
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      color: var(--text-faint);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 5px 10px;
+      flex-shrink: 0;
+    }
+    #new-tab-button:hover { border-color: var(--accent); color: var(--accent); }
+
     #canvas-area { position: relative; flex: 1; min-height: 0; }
     #graph-canvas { display: block; width: 100%; height: 100%; }
 
@@ -247,7 +304,6 @@
     <div id="canvas-column">
       <div id="toolbar">
         <span data-i18n="brand" style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-right: 4px;">DỊCH XƯỞNG</span>
-        <a href="/index.html" data-i18n="backToWorkspaces">&larr; Workspaces</a>
         <button id="batch-toggle-button" data-i18n="batchToggleButton">Hàng loạt</button>
         <button id="run-button" data-i18n="runAllButton">Run</button>
         <button id="save-button" data-i18n="saveButton">Save</button>
@@ -255,6 +311,9 @@
         <span style="flex: 1;"></span>
         <button id="lang-vi-button">VI</button>
         <button id="lang-en-button">EN</button>
+      </div>
+      <div id="workspace-tabs">
+        <button id="new-tab-button" data-i18n-title="newTabButton" title="+ Workspace mới">+</button>
       </div>
       <div id="canvas-area">
         <canvas id="graph-canvas"></canvas>
