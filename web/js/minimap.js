@@ -1,9 +1,9 @@
-function initMinimap(graph, canvas, canvasEl) {
+function initMinimap(canvas, canvasEl) {
   const minimapEl = document.getElementById("minimap");
   if (!minimapEl) return;
   const ctx = minimapEl.getContext("2d");
 
-  function computeWorldBounds() {
+  function computeWorldBounds(graph) {
     const nodes = graph._nodes;
     if (!nodes.length) return { minX: 0, minY: 0, maxX: 1000, maxY: 1000 };
     let minX = Infinity;
@@ -21,11 +21,13 @@ function initMinimap(graph, canvas, canvasEl) {
   }
 
   function draw() {
+    const graph = getActiveGraph();
     const w = minimapEl.width;
     const h = minimapEl.height;
     ctx.clearRect(0, 0, w, h);
+    if (!graph) return;
 
-    const bounds = computeWorldBounds();
+    const bounds = computeWorldBounds(graph);
     const worldW = Math.max(bounds.maxX - bounds.minX, 1);
     const worldH = Math.max(bounds.maxY - bounds.minY, 1);
     const scaleX = w / worldW;
@@ -50,10 +52,12 @@ function initMinimap(graph, canvas, canvasEl) {
   }
 
   minimapEl.addEventListener("click", (event) => {
+    const graph = getActiveGraph();
+    if (!graph) return;
     const rect = minimapEl.getBoundingClientRect();
     const clickX = event.clientX - rect.left;
     const clickY = event.clientY - rect.top;
-    const bounds = computeWorldBounds();
+    const bounds = computeWorldBounds(graph);
     const worldW = Math.max(bounds.maxX - bounds.minX, 1);
     const worldH = Math.max(bounds.maxY - bounds.minY, 1);
     const worldX = bounds.minX + (clickX / minimapEl.width) * worldW;
@@ -61,7 +65,7 @@ function initMinimap(graph, canvas, canvasEl) {
 
     canvas.ds.offset[0] = -worldX + canvasEl.clientWidth / (2 * canvas.ds.scale);
     canvas.ds.offset[1] = -worldY + canvasEl.clientHeight / (2 * canvas.ds.scale);
-    canvas.setDirtyCanvas(true, true);
+    canvas.setDirty(true, true);
   });
 
   setInterval(draw, 200);
