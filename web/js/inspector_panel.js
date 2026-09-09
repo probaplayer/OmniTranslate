@@ -1,11 +1,7 @@
 let inspectorNodeMetadata = {};
-let inspectorGraph = null;
-let inspectorWorkspaceName = null;
 let inspectorSelectedNode = null;
 
-function initInspectorPanel(nodeMetadataList, graph, canvas, workspaceName) {
-  inspectorGraph = graph;
-  inspectorWorkspaceName = workspaceName;
+function initInspectorPanel(nodeMetadataList, canvas) {
   inspectorNodeMetadata = {};
   for (const meta of nodeMetadataList) {
     inspectorNodeMetadata[meta.type] = meta;
@@ -20,6 +16,11 @@ function initInspectorPanel(nodeMetadataList, graph, canvas, workspaceName) {
     renderInspector();
   };
 
+  renderInspector();
+}
+
+function clearInspectorSelection() {
+  inspectorSelectedNode = null;
   renderInspector();
 }
 
@@ -71,7 +72,9 @@ function renderInspector() {
   titleInput.value = node.title || node.constructor.nodeType;
   titleInput.addEventListener("change", () => {
     node.title = titleInput.value;
-    inspectorGraph.setDirtyCanvas(true, true);
+    markActiveDirty();
+    const activeGraph = getActiveGraph();
+    if (activeGraph) activeGraph.setDirtyCanvas(true, true);
     renderInspector();
   });
   panel.appendChild(titleInput);
@@ -94,6 +97,7 @@ function renderInspector() {
     field.value = node.properties[name] || "";
     field.addEventListener("input", () => {
       node.properties[name] = field.value;
+      markActiveDirty();
     });
     panel.appendChild(field);
   }
@@ -110,7 +114,9 @@ function renderInspector() {
   deleteButton.className = "inspector-delete";
   deleteButton.textContent = t("delete");
   deleteButton.addEventListener("click", () => {
-    inspectorGraph.remove(node);
+    const activeGraph = getActiveGraph();
+    if (activeGraph) activeGraph.remove(node);
+    markActiveDirty();
     inspectorSelectedNode = null;
     renderInspector();
   });
@@ -127,7 +133,15 @@ function appendInspectorLabel(panel, text) {
 }
 
 function runSingleNode(node) {
-  const payload = buildExecutionPayload(inspectorGraph);
+  const activeGraph = getActiveGraph();
+  const activeWorkspaceName = getActiveWorkspaceName();
+  if (!activeGraph) return;
+  if (!activeWorkspaceName) {
+    setStatus(t("statusSaveBeforeRun"), "error");
+    return;
+  }
+
+  const payload = buildExecutionPayload(activeGraph);
   const nodeId = String(node.id);
 
   const ancestorIds = new Set([nodeId]);
@@ -148,7 +162,7 @@ function runSingleNode(node) {
   );
 
   const ws = new WebSocket(
-    `ws://${location.host}/ws/run/${encodeURIComponent(inspectorWorkspaceName)}`
+    `ws://${location.host}/ws/run/${encodeURIComponent(activeWorkspaceName)}`
   );
   ws.onopen = () => {
     ws.send(JSON.stringify({ graph: { nodes: isolatedNodes, links: isolatedLinks } }));
