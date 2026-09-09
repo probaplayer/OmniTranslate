@@ -2,7 +2,7 @@
 // palette item onto the canvas creates that node type at the drop position.
 // This is an alternative entry point to the canvas's existing right-click
 // menu (still available) -- neither replaces the other.
-function initNodePalette(nodeMetadataList, graph, canvas, canvasEl) {
+function initNodePalette(nodeMetadataList, canvas, canvasEl) {
   const paletteEl = document.getElementById("node-palette");
   if (!paletteEl) return;
 
@@ -79,6 +79,9 @@ function initNodePalette(nodeMetadataList, graph, canvas, canvasEl) {
       const nodeTypeKey = event.dataTransfer.getData("text/plain");
       if (!nodeTypeKey) return;
 
+      const activeGraph = getActiveGraph();
+      if (!activeGraph) return;
+
       const node = LiteGraph.createNode(nodeTypeKey);
       if (!node) return;
 
@@ -86,8 +89,9 @@ function initNodePalette(nodeMetadataList, graph, canvas, canvasEl) {
       const canvasPos = [event.clientX - rect.left, event.clientY - rect.top];
       node.pos = canvas.convertCanvasToOffset(canvasPos);
 
-      graph.add(node);
-      graph.setDirtyCanvas(true, true);
+      activeGraph.add(node);
+      markActiveDirty();
+      activeGraph.setDirtyCanvas(true, true);
     });
   }
 }
