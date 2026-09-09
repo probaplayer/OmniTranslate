@@ -1,6 +1,20 @@
 let tabs = [];
 let activeTabId = null;
 
+const TABS_STORAGE_KEY = "openWorkspaceTabs";
+const ACTIVE_STORAGE_KEY = "activeWorkspaceTab";
+
+function persistTabState() {
+  const names = tabs.map((tab) => tab.workspaceName).filter(Boolean);
+  localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify(names));
+  const activeTab = getActiveTab();
+  if (activeTab && activeTab.workspaceName) {
+    localStorage.setItem(ACTIVE_STORAGE_KEY, activeTab.workspaceName);
+  } else {
+    localStorage.removeItem(ACTIVE_STORAGE_KEY);
+  }
+}
+
 function makeTabId() {
   return `t${Date.now()}${Math.random().toString(36).slice(2)}`;
 }
@@ -88,6 +102,7 @@ function closeTab(id) {
   } else {
     renderTabBar();
   }
+  persistTabState();
 }
 
 function createBlankTab() {
@@ -160,6 +175,7 @@ function activateTab(tab) {
   if (typeof clearInspectorSelection === "function") clearInspectorSelection();
   canvas.setDirty(true, true);
   renderTabBar();
+  persistTabState();
 }
 
 async function saveActiveTab() {
@@ -208,33 +224,44 @@ async function saveActiveTab() {
   tab.dirty = false;
   setStatus(t("statusSaved"), "ok");
   renderTabBar();
+  persistTabState();
 }
 
 async function initWorkspaceTabs() {
   const params = new URLSearchParams(window.location.search);
-  const initialWorkspaceName = params.get("workspace");
+  const urlWorkspaceName = params.get("workspace");
 
-  let graph;
-  if (initialWorkspaceName) {
-    const response = await fetch(`/api/workspaces/${encodeURIComponent(initialWorkspaceName)}`);
-    graph = new LGraph();
-    if (response.ok) {
-      const savedGraph = await response.json();
-      if (savedGraph.nodes && savedGraph.nodes.length) {
-        graph.configure(savedGraph);
-        for (const node of graph._nodes) {
-          const minHeight = node.computeSize()[1];
-          if (node.size[1] < minHeight) node.size[1] = minHeight;
-        }
-      }
-    } else {
-      setStatus(`${t("statusLoadWorkspaceError")}${response.status}`, "error");
-    }
-    const tab = createTabForGraph(initialWorkspaceName, graph);
-    activateTab(tab);
-  } else {
-    graph = new LGraph();
-    const tab = createTabForGraph(null, graph);
-    activateTab(tab);
+  let remembered = [];
+  try {
+    remembered = JSON.parse(localStorage.getItem(TABS_STORAGE_KEY) || "[]");
+  } catch {
+    remembered = [];
   }
+  const namesToOpen = [...remembered];
+  if (urlWorkspaceName && !namesToOpen.includes(urlWorkspaceName)) {
+    namesToOpen.push(urlWorkspaceName);
+  }
+  const activeName = urlWorkspaceName || localStorage.getItem(ACTIVE_STORAGE_KEY);
+
+  const createdTabs = [];
+  for (const name of namesToOpen) {
+    const response = await fetch(`/api/workspaces/${encodeURIComponent(name)}`);
+    if (!response.ok) continue; // a remembered workspace that no longer exists -- skip it silently
+    const graph = new LGraph();
+    const savedGraph = await response.json();
+    if (savedGraph.nodes && savedGraph.nodes.length) {
+      graph.configure(savedGraph);
+      for (const node of graph._nodes) {
+        const minHeight = node.computeSize()[1];
+        if (node.size[1] < minHeight) node.size[1] = minHeight;
+      }
+    }
+    createdTabs.push(createTabForGraph(name, graph));
+  }
+
+  let tabToActivate = createdTabs.find((tab) => tab.workspaceName === activeName);
+  if (!tabToActivate) tabToActivate = createdTabs[0];
+  if (!tabToActivate) tabToActivate = createTabForGraph(null, new LGraph());
+
+  activateTab(tabToActivate);
 }
