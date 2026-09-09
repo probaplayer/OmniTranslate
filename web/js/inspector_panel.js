@@ -104,13 +104,30 @@ function appendInspectorLabel(panel, text) {
 function runSingleNode(node) {
   const payload = buildExecutionPayload(inspectorGraph);
   const nodeId = String(node.id);
-  const isolatedNodes = payload.nodes.filter((n) => n.id === nodeId);
+
+  const ancestorIds = new Set([nodeId]);
+  let frontier = [nodeId];
+  while (frontier.length > 0) {
+    const next = [];
+    for (const link of payload.links) {
+      if (ancestorIds.has(link.to_node) && !ancestorIds.has(link.from_node)) {
+        ancestorIds.add(link.from_node);
+        next.push(link.from_node);
+      }
+    }
+    frontier = next;
+  }
+
+  const isolatedNodes = payload.nodes.filter((n) => ancestorIds.has(n.id));
+  const isolatedLinks = payload.links.filter(
+    (link) => ancestorIds.has(link.from_node) && ancestorIds.has(link.to_node)
+  );
 
   const ws = new WebSocket(
     `ws://${location.host}/ws/run/${encodeURIComponent(inspectorWorkspaceName)}`
   );
   ws.onopen = () => {
-    ws.send(JSON.stringify({ graph: { nodes: isolatedNodes, links: [] } }));
+    ws.send(JSON.stringify({ graph: { nodes: isolatedNodes, links: isolatedLinks } }));
   };
   ws.onmessage = (message) => {
     const event = JSON.parse(message.data);
