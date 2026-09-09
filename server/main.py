@@ -4,6 +4,7 @@ import threading
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, WebSocket
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -22,6 +23,11 @@ WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 # graph (which can read and write arbitrary files). Only our own origins are
 # accepted; see ws_run.
 _ALLOWED_ORIGINS = {"http://127.0.0.1:8000", "http://localhost:8000"}
+
+
+@app.get("/")
+def root():
+    return RedirectResponse(url="/canvas.html")
 
 
 class CreateWorkspaceRequest(BaseModel):
