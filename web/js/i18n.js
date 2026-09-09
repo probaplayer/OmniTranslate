@@ -12,6 +12,7 @@ const STR = {
     createWorkspaceGenericError: "Không tạo được workspace",
     createWorkspaceServerError: "Không tạo được workspace — kiểm tra server.",
     backToWorkspaces: "← Workspaces",
+    brand: "DỊCH XƯỞNG",
     runAllButton: "Chạy toàn bộ",
     saveButton: "Lưu",
     batchToggleButton: "Hàng loạt",
@@ -36,6 +37,12 @@ const STR = {
     batchConcurrency: "Chạy song song",
     batchStart: "Bắt đầu",
     batchUnavailable: "Cần Sub-project A2 (Loop Group) — chưa khả dụng.",
+    palette: "Thư viện node",
+    paletteHint: "Kéo vào canvas để thêm.",
+    stIdle: "Chờ",
+    stRunning: "Đang chạy",
+    stDone: "Xong",
+    stError: "Lỗi",
   },
   en: {
     pickerTitle: "Select workspace",
@@ -50,6 +57,7 @@ const STR = {
     createWorkspaceGenericError: "Could not create workspace",
     createWorkspaceServerError: "Could not create workspace — check the server.",
     backToWorkspaces: "← Workspaces",
+    brand: "DICH XUONG",
     runAllButton: "Run all",
     saveButton: "Save",
     batchToggleButton: "Batch",
@@ -74,8 +82,56 @@ const STR = {
     batchConcurrency: "Parallel runs",
     batchStart: "Start",
     batchUnavailable: "Requires Sub-project A2 (Loop Group) — not available yet.",
+    palette: "Node library",
+    paletteHint: "Drag onto the canvas to add.",
+    stIdle: "Idle",
+    stRunning: "Running",
+    stDone: "Done",
+    stError: "Error",
   },
 };
+
+const NODE_TYPE_LABELS = {
+  vi: {
+    LoadTextFile: "ĐỌC FILE", SaveTextFile: "GHI FILE", TextPreview: "XEM TRƯỚC",
+    Note: "GHI CHÚ", Provider: "NGUỒN MODEL", LoadAgentFile: "ĐỌC AGENT",
+    SaveAgentFile: "GHI AGENT", RAGQuery: "TRUY VẤN RAG", SaveToRAG: "LƯU RAG",
+    Translate: "DỊCH",
+  },
+  en: {
+    LoadTextFile: "LOAD FILE", SaveTextFile: "SAVE FILE", TextPreview: "PREVIEW",
+    Note: "NOTE", Provider: "MODEL SOURCE", LoadAgentFile: "LOAD AGENT",
+    SaveAgentFile: "SAVE AGENT", RAGQuery: "RAG QUERY", SaveToRAG: "SAVE TO RAG",
+    Translate: "TRANSLATE",
+  },
+};
+
+const NODE_TYPE_DESCS = {
+  vi: {
+    LoadTextFile: "Đọc file text", SaveTextFile: "Ghi file text",
+    TextPreview: "Xem trước nội dung", Note: "Ghi chú tự do",
+    Provider: "Kết nối API/LM Studio", LoadAgentFile: "Đọc file agent",
+    SaveAgentFile: "Ghi file agent", RAGQuery: "Truy vấn RAG",
+    SaveToRAG: "Lưu vào RAG", Translate: "Dịch văn bản",
+  },
+  en: {
+    LoadTextFile: "Read a text file", SaveTextFile: "Write a text file",
+    TextPreview: "Preview text content", Note: "Freeform note",
+    Provider: "API or LM Studio connection", LoadAgentFile: "Read the agent file",
+    SaveAgentFile: "Write the agent file", RAGQuery: "Query the RAG store",
+    SaveToRAG: "Save into the RAG store", Translate: "Translate text",
+  },
+};
+
+function nodeTypeLabel(type) {
+  const table = NODE_TYPE_LABELS[currentLang()] || NODE_TYPE_LABELS.vi;
+  return table[type] || type;
+}
+
+function nodeTypeDesc(type) {
+  const table = NODE_TYPE_DESCS[currentLang()] || NODE_TYPE_DESCS.vi;
+  return table[type] || "";
+}
 
 function currentLang() {
   return localStorage.getItem("lang") || "vi";
