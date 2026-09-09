@@ -66,3 +66,17 @@ class Note(NodeBase):
 
     def execute(self, text: str) -> tuple:
         return ()
+
+
+@register_node("TextInput")
+class TextInput(NodeBase):
+    CATEGORY = "Utility"
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {"text": ("STRING", {"default": ""})}}
+
+    def execute(self, text: str) -> tuple:
+        return (text,)

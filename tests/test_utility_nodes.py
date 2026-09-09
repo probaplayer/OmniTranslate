@@ -30,3 +30,9 @@ def test_text_preview_does_not_raise():
 def test_note_does_not_raise():
     node = get_node_class("Note")()
     assert node.execute(text="a note") == ()
+
+
+def test_text_input_returns_the_pasted_text():
+    node = get_node_class("TextInput")()
+    result = node.execute(text="toàn bộ nội dung chương")
+    assert result == ("toàn bộ nội dung chương",)
