@@ -40,6 +40,30 @@ function renderInspector() {
   const meta = inspectorNodeMetadata[node.constructor.nodeType] || {
     input_types: { required: {}, optional: {} },
   };
+  const typeMeta = NODE_TYPE_META[node.constructor.nodeType] || NODE_TYPE_META_FALLBACK;
+
+  const header = document.createElement("div");
+  header.className = "inspector-header";
+
+  const headerIcon = document.createElement("span");
+  headerIcon.className = "inspector-header-icon";
+  headerIcon.style.color = typeMeta.color;
+  headerIcon.textContent = typeMeta.icon;
+  header.appendChild(headerIcon);
+
+  const headerText = document.createElement("div");
+  const headerType = document.createElement("div");
+  headerType.className = "inspector-header-type";
+  headerType.style.color = typeMeta.color;
+  headerType.textContent = nodeTypeLabel(node.constructor.nodeType);
+  const headerTitle = document.createElement("div");
+  headerTitle.className = "inspector-header-title";
+  headerTitle.textContent = node.title || node.constructor.nodeType;
+  headerText.appendChild(headerType);
+  headerText.appendChild(headerTitle);
+  header.appendChild(headerText);
+
+  panel.appendChild(header);
 
   appendInspectorLabel(panel, t("nodeName"));
   const titleInput = document.createElement("input");
@@ -48,6 +72,7 @@ function renderInspector() {
   titleInput.addEventListener("change", () => {
     node.title = titleInput.value;
     inspectorGraph.setDirtyCanvas(true, true);
+    renderInspector();
   });
   panel.appendChild(titleInput);
 
