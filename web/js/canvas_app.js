@@ -63,6 +63,10 @@ async function init() {
   const savedGraph = await graphResponse.json();
   if (savedGraph.nodes && savedGraph.nodes.length) {
     graph.configure(savedGraph);
+    for (const node of graph._nodes) {
+      const minHeight = node.computeSize()[1];
+      if (node.size[1] < minHeight) node.size[1] = minHeight;
+    }
   }
 
   graph.start();
@@ -118,17 +122,15 @@ function runGraph() {
 
 document.getElementById("run-button").addEventListener("click", runGraph);
 document.getElementById("save-button").addEventListener("click", saveGraph);
-document.getElementById("lang-vi-button").addEventListener("click", () => {
-  setLang("vi");
+function switchLang(lang) {
+  setLang(lang);
   renderInspector();
   if (nodeMetadataList) initNodePalette(nodeMetadataList, graph, canvas, canvasEl);
   renderLogEmptyState();
-});
-document.getElementById("lang-en-button").addEventListener("click", () => {
-  setLang("en");
-  renderInspector();
-  if (nodeMetadataList) initNodePalette(nodeMetadataList, graph, canvas, canvasEl);
-  renderLogEmptyState();
-});
+  graph.setDirtyCanvas(true, true);
+}
+
+document.getElementById("lang-vi-button").addEventListener("click", () => switchLang("vi"));
+document.getElementById("lang-en-button").addEventListener("click", () => switchLang("en"));
 
 init();

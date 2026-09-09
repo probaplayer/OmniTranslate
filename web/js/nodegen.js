@@ -59,13 +59,18 @@ function registerDynamicNodeTypes(nodeMetadataList) {
       this.boxcolor = typeMeta.color;
       this._runStatus = "idle";
       this._runStatusAt = null;
-      this.size[1] += NODE_FOOTER_HEIGHT;
     }
 
     DynamicNode.title = meta.type;
     DynamicNode.category = meta.category;
     DynamicNode.nodeType = meta.type;
     DynamicNode.slot_start_y = NODE_HEADER_HEIGHT;
+
+    DynamicNode.prototype.computeSize = function (out) {
+      const size = LiteGraph.LGraphNode.prototype.computeSize.call(this, out);
+      size[1] += NODE_FOOTER_HEIGHT;
+      return size;
+    };
 
     DynamicNode.prototype.onDrawForeground = function (ctx) {
       if (this.flags.collapsed) return;
