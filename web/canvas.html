@@ -31,11 +31,28 @@
       text-transform: uppercase;
     }
     .palette-category:first-child { margin-top: 0; }
+    .palette-header {
+      padding: 14px 14px 8px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+    .palette-hint {
+      padding: 0 14px 10px;
+      font-size: 11.5px;
+      color: var(--text-faint);
+      line-height: 1.5;
+    }
     .palette-item {
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 6px;
       cursor: grab;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
       font-size: 0.9rem;
       margin-bottom: 6px;
       padding: 8px 10px;
@@ -43,6 +60,10 @@
     }
     .palette-item:hover { background: var(--bg-hover); border-color: var(--accent); }
     .palette-item:active { cursor: grabbing; }
+    .palette-item-icon { font-size: 14px; flex-shrink: 0; width: 16px; text-align: center; }
+    .palette-item-body { min-width: 0; }
+    .palette-item-name { font-size: 12.5px; font-weight: 500; color: var(--text); }
+    .palette-item-desc { font-size: 10.5px; color: var(--text-faint); line-height: 1.35; margin-top: 2px; }
 
     #canvas-column { display: flex; flex-direction: column; flex: 1; min-width: 0; }
     #toolbar {
@@ -104,6 +125,14 @@
       line-height: 1.6;
     }
     .log-time { color: var(--text-faint); }
+    .log-count-badge {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      background: var(--bg-input);
+      color: var(--text-faint);
+      border-radius: 8px;
+      padding: 1px 6px;
+    }
 
     #batch-panel {
       position: absolute;
@@ -156,6 +185,22 @@
       font-size: 12.5px;
       line-height: 1.6;
     }
+    .inspector-header {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      padding-bottom: 12px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .inspector-header-icon { font-size: 18px; }
+    .inspector-header-type {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .inspector-header-title { font-size: 13px; font-weight: 600; margin-top: 2px; }
     .inspector-label {
       color: var(--text-faint);
       font-size: 10px;
@@ -201,6 +246,7 @@
     <aside id="node-palette"></aside>
     <div id="canvas-column">
       <div id="toolbar">
+        <span data-i18n="brand" style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-right: 4px;">DỊCH XƯỞNG</span>
         <a href="/index.html" data-i18n="backToWorkspaces">&larr; Workspaces</a>
         <button id="batch-toggle-button" data-i18n="batchToggleButton">Hàng loạt</button>
         <button id="run-button" data-i18n="runAllButton">Run</button>
@@ -228,6 +274,7 @@
       <div id="log-console">
         <div id="log-console-header">
           <span data-i18n="logTitle">Log chạy</span>
+          <span id="log-count-badge" class="log-count-badge">0</span>
           <span style="flex: 1;"></span>
           <button id="clear-log-button" data-i18n="clearLog" style="background: transparent; border: none; color: var(--text-faint); font-size: 11px; cursor: pointer;">Xoá log</button>
         </div>
