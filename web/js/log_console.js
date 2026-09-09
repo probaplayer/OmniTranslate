@@ -20,14 +20,16 @@ function renderLogEmptyState() {
   const body = document.getElementById("log-console-body");
   if (!body) return;
   if (body.querySelector(".log-entry")) return;
-  if (body.querySelector(".log-empty")) return;
-  const empty = document.createElement("div");
-  empty.className = "log-empty";
-  empty.style.padding = "14px 12px";
-  empty.style.fontSize = "11.5px";
-  empty.style.color = "#5d646e";
+  let empty = body.querySelector(".log-empty");
+  if (!empty) {
+    empty = document.createElement("div");
+    empty.className = "log-empty";
+    empty.style.padding = "14px 12px";
+    empty.style.fontSize = "11.5px";
+    empty.style.color = "#5d646e";
+    body.appendChild(empty);
+  }
   empty.textContent = t("logEmpty");
-  body.appendChild(empty);
 }
 
 function appendLogEntry(event) {

@@ -66,24 +66,28 @@ function initNodePalette(nodeMetadataList, graph, canvas, canvasEl) {
     }
   }
 
-  canvasEl.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "copy";
-  });
+  if (!canvasEl.dataset.paletteDropWired) {
+    canvasEl.dataset.paletteDropWired = "true";
 
-  canvasEl.addEventListener("drop", (event) => {
-    event.preventDefault();
-    const nodeTypeKey = event.dataTransfer.getData("text/plain");
-    if (!nodeTypeKey) return;
+    canvasEl.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+    });
 
-    const node = LiteGraph.createNode(nodeTypeKey);
-    if (!node) return;
+    canvasEl.addEventListener("drop", (event) => {
+      event.preventDefault();
+      const nodeTypeKey = event.dataTransfer.getData("text/plain");
+      if (!nodeTypeKey) return;
 
-    const rect = canvasEl.getBoundingClientRect();
-    const canvasPos = [event.clientX - rect.left, event.clientY - rect.top];
-    node.pos = canvas.convertCanvasToOffset(canvasPos);
+      const node = LiteGraph.createNode(nodeTypeKey);
+      if (!node) return;
 
-    graph.add(node);
-    graph.setDirtyCanvas(true, true);
-  });
+      const rect = canvasEl.getBoundingClientRect();
+      const canvasPos = [event.clientX - rect.left, event.clientY - rect.top];
+      node.pos = canvas.convertCanvasToOffset(canvasPos);
+
+      graph.add(node);
+      graph.setDirtyCanvas(true, true);
+    });
+  }
 }

@@ -39,13 +39,15 @@ function setStatus(text, kind = "info") {
   statusEl.className = `status-${kind}`;
 }
 
+let nodeMetadataList = null;
+
 async function init() {
   const nodesResponse = await fetch("/api/nodes");
   if (!nodesResponse.ok) {
     setStatus(`${t("statusLoadNodesError")}${nodesResponse.status}`, "error");
     return;
   }
-  const nodeMetadataList = await nodesResponse.json();
+  nodeMetadataList = await nodesResponse.json();
   registerDynamicNodeTypes(nodeMetadataList);
   initNodePalette(nodeMetadataList, graph, canvas, canvasEl);
   initInspectorPanel(nodeMetadataList, graph, canvas, workspaceName);
@@ -119,10 +121,14 @@ document.getElementById("save-button").addEventListener("click", saveGraph);
 document.getElementById("lang-vi-button").addEventListener("click", () => {
   setLang("vi");
   renderInspector();
+  if (nodeMetadataList) initNodePalette(nodeMetadataList, graph, canvas, canvasEl);
+  renderLogEmptyState();
 });
 document.getElementById("lang-en-button").addEventListener("click", () => {
   setLang("en");
   renderInspector();
+  if (nodeMetadataList) initNodePalette(nodeMetadataList, graph, canvas, canvasEl);
+  renderLogEmptyState();
 });
 
 init();
