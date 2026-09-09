@@ -106,16 +106,15 @@ function runSingleNode(node) {
   const nodeId = String(node.id);
 
   const ancestorIds = new Set([nodeId]);
-  let frontier = [nodeId];
-  while (frontier.length > 0) {
-    const next = [];
+  let changed = true;
+  while (changed) {
+    changed = false;
     for (const link of payload.links) {
       if (ancestorIds.has(link.to_node) && !ancestorIds.has(link.from_node)) {
         ancestorIds.add(link.from_node);
-        next.push(link.from_node);
+        changed = true;
       }
     }
-    frontier = next;
   }
 
   const isolatedNodes = payload.nodes.filter((n) => ancestorIds.has(n.id));
@@ -129,9 +128,13 @@ function runSingleNode(node) {
   ws.onopen = () => {
     ws.send(JSON.stringify({ graph: { nodes: isolatedNodes, links: isolatedLinks } }));
   };
+  ws.onerror = () => setStatus(t("statusWsError"), "error");
   ws.onmessage = (message) => {
     const event = JSON.parse(message.data);
-    if (typeof appendLogEntry === "function") appendLogEntry(event);
-    if (event.event === "run_finished") ws.close();
+    appendLogEntry(event);
+    if (event.event === "run_finished") {
+      setStatus(t("statusRunFinished"), "ok");
+      ws.close();
+    }
   };
 }

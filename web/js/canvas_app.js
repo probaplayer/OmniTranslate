@@ -3,7 +3,20 @@ const workspaceName = params.get("workspace");
 
 const graph = new LGraph();
 const canvasEl = document.getElementById("graph-canvas");
+
+// NODE_TITLE_COLOR/LINK_COLOR must be set before LGraphCanvas is
+// constructed: its constructor copies them into instance properties
+// (node_title_color/default_link_color) once, at construction time, and
+// the renderer reads those cached copies rather than the LiteGraph
+// globals afterward -- setting these after `new LGraphCanvas(...)` would
+// silently have no visual effect.
+LiteGraph.NODE_DEFAULT_BGCOLOR = "#1a1d23";
+LiteGraph.NODE_DEFAULT_COLOR = "#2a2f37";
+LiteGraph.NODE_TITLE_COLOR = "#9aa1ab";
+LiteGraph.LINK_COLOR = "#d9a44c";
+
 const canvas = new LGraphCanvas(canvasEl, graph);
+canvas.clear_background_color = "#101216";
 
 // The <canvas> element's drawing-buffer resolution defaults to 300x150 and
 // does not track its CSS/flex-layout size on its own -- without this, nodes
@@ -15,6 +28,9 @@ function syncCanvasSize() {
 }
 syncCanvasSize();
 window.addEventListener("resize", syncCanvasSize);
+if (window.ResizeObserver) {
+  new ResizeObserver(syncCanvasSize).observe(document.getElementById("canvas-area"));
+}
 
 function setStatus(text, kind = "info") {
   const statusEl = document.getElementById("status");
@@ -22,10 +38,13 @@ function setStatus(text, kind = "info") {
   statusEl.className = `status-${kind}`;
 }
 
+// Mirrors the --accent/--success/--danger tokens in style.css. Canvas 2D
+// fill/stroke colors can't reference CSS custom properties directly, so
+// these are kept as literal hex matching those tokens' values.
 function colorForEvent(eventName) {
-  if (eventName === "node_started") return "#557";
-  if (eventName === "node_completed") return "#575";
-  return "#755";
+  if (eventName === "node_started") return "#d9a44c";
+  if (eventName === "node_completed") return "#7fb98a";
+  return "#d97070";
 }
 
 async function init() {
@@ -102,7 +121,13 @@ function runGraph() {
 
 document.getElementById("run-button").addEventListener("click", runGraph);
 document.getElementById("save-button").addEventListener("click", saveGraph);
-document.getElementById("lang-vi-button").addEventListener("click", () => setLang("vi"));
-document.getElementById("lang-en-button").addEventListener("click", () => setLang("en"));
+document.getElementById("lang-vi-button").addEventListener("click", () => {
+  setLang("vi");
+  renderInspector();
+});
+document.getElementById("lang-en-button").addEventListener("click", () => {
+  setLang("en");
+  renderInspector();
+});
 
 init();
