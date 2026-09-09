@@ -13,6 +13,19 @@ function initNodePalette(nodeMetadataList, graph, canvas, canvasEl) {
   }
 
   paletteEl.innerHTML = "";
+
+  const header = document.createElement("div");
+  header.className = "palette-header";
+  header.setAttribute("data-i18n", "palette");
+  header.textContent = t("palette");
+  paletteEl.appendChild(header);
+
+  const hint = document.createElement("div");
+  hint.className = "palette-hint";
+  hint.setAttribute("data-i18n", "paletteHint");
+  hint.textContent = t("paletteHint");
+  paletteEl.appendChild(hint);
+
   for (const [category, metas] of Object.entries(byCategory)) {
     const heading = document.createElement("div");
     heading.className = "palette-category";
@@ -21,10 +34,30 @@ function initNodePalette(nodeMetadataList, graph, canvas, canvasEl) {
 
     for (const meta of metas) {
       const nodeTypeKey = `${meta.category}/${meta.type}`;
+      const typeMeta = NODE_TYPE_META[meta.type] || NODE_TYPE_META_FALLBACK;
+
       const item = document.createElement("div");
       item.className = "palette-item";
-      item.textContent = meta.type;
       item.draggable = true;
+
+      const icon = document.createElement("span");
+      icon.className = "palette-item-icon";
+      icon.style.color = typeMeta.color;
+      icon.textContent = typeMeta.icon;
+      item.appendChild(icon);
+
+      const body = document.createElement("div");
+      body.className = "palette-item-body";
+      const name = document.createElement("div");
+      name.className = "palette-item-name";
+      name.textContent = meta.type;
+      const desc = document.createElement("div");
+      desc.className = "palette-item-desc";
+      desc.textContent = nodeTypeDesc(meta.type);
+      body.appendChild(name);
+      body.appendChild(desc);
+      item.appendChild(body);
+
       item.addEventListener("dragstart", (event) => {
         event.dataTransfer.setData("text/plain", nodeTypeKey);
         event.dataTransfer.effectAllowed = "copy";
