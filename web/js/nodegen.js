@@ -1,5 +1,44 @@
+const NODE_TYPE_META = {
+  LoadTextFile: { icon: "▤", color: "#7ea6c9" },
+  SaveTextFile: { icon: "⤓", color: "#9b8fc4" },
+  TextPreview: { icon: "◐", color: "#8d949e" },
+  Note: { icon: "✎", color: "#8d949e" },
+  Provider: { icon: "✦", color: "#7fb98a" },
+  LoadAgentFile: { icon: "◈", color: "#d9a44c" },
+  SaveAgentFile: { icon: "◆", color: "#d9a44c" },
+  RAGQuery: { icon: "◎", color: "#c98a7e" },
+  SaveToRAG: { icon: "◉", color: "#c98a7e" },
+  Translate: { icon: "⇄", color: "#7fb98a" },
+};
+const NODE_TYPE_META_FALLBACK = { icon: "●", color: "#767d88" };
+
+const NODE_HEADER_HEIGHT = 20;
+const NODE_FOOTER_HEIGHT = 22;
+
+const RUN_STATUS_COLOR = {
+  idle: "#6b7280",
+  running: "#d9a44c",
+  done: "#7fb98a",
+  error: "#d97070",
+};
+const RUN_STATUS_KEY = {
+  idle: "stIdle",
+  running: "stRunning",
+  done: "stDone",
+  error: "stError",
+};
+
+function formatClockTime(ms) {
+  const d = new Date(ms);
+  return [d.getHours(), d.getMinutes(), d.getSeconds()]
+    .map((v) => String(v).padStart(2, "0"))
+    .join(":");
+}
+
 function registerDynamicNodeTypes(nodeMetadataList) {
   for (const meta of nodeMetadataList) {
+    const typeMeta = NODE_TYPE_META[meta.type] || NODE_TYPE_META_FALLBACK;
+
     function DynamicNode() {
       const required = meta.input_types.required || {};
       const optional = meta.input_types.optional || {};
@@ -16,11 +55,63 @@ function registerDynamicNodeTypes(nodeMetadataList) {
       meta.return_names.forEach((name, idx) => {
         this.addOutput(name, meta.return_types[idx]);
       });
+
+      this.boxcolor = typeMeta.color;
+      this._runStatus = "idle";
+      this._runStatusAt = null;
+      this.size[1] += NODE_FOOTER_HEIGHT;
     }
 
     DynamicNode.title = meta.type;
     DynamicNode.category = meta.category;
     DynamicNode.nodeType = meta.type;
+    DynamicNode.slot_start_y = NODE_HEADER_HEIGHT;
+
+    DynamicNode.prototype.onDrawForeground = function (ctx) {
+      if (this.flags.collapsed) return;
+      const tm = NODE_TYPE_META[this.constructor.nodeType] || NODE_TYPE_META_FALLBACK;
+      const w = this.size[0];
+      const h = this.size[1];
+
+      ctx.save();
+
+      // Header row: icon + uppercase type label, in the type's color.
+      ctx.fillStyle = tm.color;
+      ctx.font = "10px 'IBM Plex Mono', monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`${tm.icon} ${nodeTypeLabel(this.constructor.nodeType)}`, 8, NODE_HEADER_HEIGHT / 2);
+
+      // Footer row: separator + status dot + status text + timestamp meta.
+      const footerY = h - NODE_FOOTER_HEIGHT;
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, footerY);
+      ctx.lineTo(w, footerY);
+      ctx.stroke();
+
+      const dotY = footerY + NODE_FOOTER_HEIGHT / 2;
+      const statusColor = RUN_STATUS_COLOR[this._runStatus] || RUN_STATUS_COLOR.idle;
+      ctx.fillStyle = statusColor;
+      ctx.beginPath();
+      ctx.arc(10, dotY, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = statusColor;
+      ctx.font = "10px 'IBM Plex Mono', monospace";
+      ctx.textAlign = "left";
+      ctx.fillText(t(RUN_STATUS_KEY[this._runStatus] || RUN_STATUS_KEY.idle), 18, dotY);
+
+      if (this._runStatusAt && (this._runStatus === "done" || this._runStatus === "error")) {
+        ctx.fillStyle = "#6f7681";
+        ctx.textAlign = "right";
+        ctx.fillText(formatClockTime(this._runStatusAt), w - 8, dotY);
+      }
+
+      ctx.restore();
+    };
+
     LiteGraph.registerNodeType(`${meta.category}/${meta.type}`, DynamicNode);
   }
 }
