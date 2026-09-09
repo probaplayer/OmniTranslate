@@ -14,6 +14,7 @@ LiteGraph.NODE_DEFAULT_BGCOLOR = "#1a1d23";
 LiteGraph.NODE_DEFAULT_COLOR = "#2a2f37";
 LiteGraph.NODE_TITLE_COLOR = "#9aa1ab";
 LiteGraph.LINK_COLOR = "#d9a44c";
+LiteGraph.NODE_WIDTH = 200;
 
 const canvas = new LGraphCanvas(canvasEl, graph);
 canvas.clear_background_color = "#101216";
@@ -36,15 +37,6 @@ function setStatus(text, kind = "info") {
   const statusEl = document.getElementById("status");
   statusEl.textContent = text;
   statusEl.className = `status-${kind}`;
-}
-
-// Mirrors the --accent/--success/--danger tokens in style.css. Canvas 2D
-// fill/stroke colors can't reference CSS custom properties directly, so
-// these are kept as literal hex matching those tokens' values.
-function colorForEvent(eventName) {
-  if (eventName === "node_started") return "#d9a44c";
-  if (eventName === "node_completed") return "#7fb98a";
-  return "#d97070";
 }
 
 async function init() {
@@ -112,7 +104,10 @@ function runGraph() {
     }
     const node = graph.getNodeById(Number(event.node_id));
     if (node) {
-      node.bgcolor = colorForEvent(event.event);
+      if (event.event === "node_started") node._runStatus = "running";
+      else if (event.event === "node_completed") node._runStatus = "done";
+      else node._runStatus = "error";
+      node._runStatusAt = Date.now();
       graph.setDirtyCanvas(true, true);
     }
     setStatus(`${event.event}: node ${event.node_id}`);
