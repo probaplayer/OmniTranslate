@@ -112,6 +112,7 @@ document.addEventListener("keydown", (event) => {
 
 function switchLang(lang) {
   setLang(lang);
+  renderTabBar();
   renderInspector();
   if (nodeMetadataList) initNodePalette(nodeMetadataList, canvas, canvasEl);
   renderLogEmptyState();

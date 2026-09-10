@@ -35,7 +35,10 @@ function getActiveWorkspaceName() {
 
 function markActiveDirty() {
   const tab = getActiveTab();
-  if (tab) tab.dirty = true;
+  if (tab) {
+    tab.dirty = true;
+    renderTabBar();
+  }
 }
 
 function createTabForGraph(workspaceName, graph) {
