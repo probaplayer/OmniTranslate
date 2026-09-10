@@ -3,6 +3,7 @@ import json
 import pytest
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
+from pathlib import Path
 
 from server import main as server_main
 from server import workspace
@@ -505,3 +506,79 @@ def test_websocket_run_sends_terminal_event_when_an_event_cannot_be_sent(
     # silently killing the connection.
     assert [e["event"] for e in events] == ["node_started", "runtime_error"]
     assert "Failed to send event" in events[-1]["message"]
+
+
+def test_browse_directory_lists_subdirectories(tmp_path):
+    (tmp_path / "chapters").mkdir()
+    (tmp_path / "output").mkdir()
+    (tmp_path / "notes.txt").write_text("not a directory")
+
+    client = TestClient(app)
+    response = client.get("/api/browse-directory", params={"path": str(tmp_path)})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["path"] == str(tmp_path)
+    names = {e["name"] for e in body["entries"]}
+    assert names == {"chapters", "output"}
+
+
+def test_browse_directory_reports_parent_for_going_up(tmp_path):
+    child = tmp_path / "chapters"
+    child.mkdir()
+
+    client = TestClient(app)
+    response = client.get("/api/browse-directory", params={"path": str(child)})
+
+    assert response.json()["parent"] == str(tmp_path)
+
+
+def test_browse_directory_rejects_nonexistent_path(tmp_path):
+    client = TestClient(app)
+    response = client.get(
+        "/api/browse-directory", params={"path": str(tmp_path / "missing")}
+    )
+
+    assert response.status_code == 400
+
+
+def test_browse_directory_rejects_a_file_path(tmp_path):
+    file_path = tmp_path / "notes.txt"
+    file_path.write_text("hello")
+
+    client = TestClient(app)
+    response = client.get("/api/browse-directory", params={"path": str(file_path)})
+
+    assert response.status_code == 400
+
+
+def test_browse_directory_empty_path_returns_drive_list():
+    client = TestClient(app)
+    response = client.get("/api/browse-directory")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["path"] is None
+    assert body["parent"] is None
+    assert len(body["entries"]) > 0  # at least the drive these tests run from
+
+
+def test_browse_directory_skips_permission_denied_subfolder(tmp_path, monkeypatch):
+    (tmp_path / "ok").mkdir()
+    (tmp_path / "locked").mkdir()
+
+    real_is_dir = Path.is_dir
+
+    def flaky_is_dir(self):
+        if self.name == "locked":
+            raise PermissionError("denied")
+        return real_is_dir(self)
+
+    monkeypatch.setattr(Path, "is_dir", flaky_is_dir)
+
+    client = TestClient(app)
+    response = client.get("/api/browse-directory", params={"path": str(tmp_path)})
+
+    assert response.status_code == 200
+    names = {e["name"] for e in response.json()["entries"]}
+    assert names == {"ok"}

@@ -1,4 +1,5 @@
 import asyncio
+import os
 import queue
 import threading
 from pathlib import Path
@@ -89,6 +90,40 @@ def get_workspace_graph(name: str):
         return workspace.open_workspace(name)
     except workspace.WorkspaceError as exc:
         raise _workspace_http_error(exc, 404)
+
+
+@app.get("/api/browse-directory")
+def browse_directory(path: str = ""):
+    if not path:
+        entries = [
+            {"name": drive.rstrip("\\/"), "path": drive}
+            for drive in os.listdrives()
+        ]
+        return {"path": None, "parent": None, "entries": entries}
+
+    target = Path(path)
+    if not target.is_dir():
+        raise HTTPException(
+            status_code=400, detail="Path does not exist or is not a directory"
+        )
+
+    entries = []
+    try:
+        children = sorted(target.iterdir(), key=lambda p: p.name.lower())
+    except PermissionError:
+        children = []
+    for child in children:
+        try:
+            if child.is_dir():
+                entries.append({"name": child.name, "path": str(child)})
+        except PermissionError:
+            continue
+
+    # A drive root is its own parent in pathlib (Path("C:/").parent == Path("C:/")) --
+    # without this check, "Up" from a drive root would loop on itself forever
+    # instead of surfacing the drive list.
+    parent = str(target.parent) if target.parent != target else None
+    return {"path": str(target), "parent": parent, "entries": entries}
 
 
 @app.put("/api/workspaces/{name}/graph")
