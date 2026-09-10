@@ -177,6 +177,64 @@
       color: var(--text-faint);
     }
 
+    .path-picker-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .path-picker-modal {
+      width: 420px;
+      max-height: 70vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 14px;
+      box-sizing: border-box;
+    }
+    .path-picker-breadcrumb {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-faint);
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+    .path-picker-list {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    .path-picker-item {
+      padding: 7px 10px;
+      font-size: 12.5px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .path-picker-item:hover { background: var(--bg-hover); }
+    .path-picker-item.selected { background: var(--bg-hover); color: var(--accent); }
+    .path-picker-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .path-picker-actions button {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 12px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .path-picker-actions button:hover { border-color: var(--accent); color: var(--accent); }
+
     #canvas-area { position: relative; flex: 1; min-height: 0; }
     #graph-canvas { display: block; width: 100%; height: 100%; }
 
@@ -394,6 +452,7 @@
   <script src="/js/litegraph.js"></script>
   <script src="/js/nodegen.js"></script>
   <script src="/js/node_palette.js"></script>
+  <script src="/js/path_picker.js"></script>
   <script src="/js/inspector_panel.js"></script>
   <script src="/js/batch_panel.js"></script>
   <script src="/js/minimap.js"></script>

@@ -51,6 +51,9 @@ const STR = {
     stError: "Lỗi",
     openWorkspaceButton: "Mở workspace...",
     noOtherWorkspaces: "Không có workspace nào khác",
+    pathPickerSelect: "Chọn thư mục này",
+    pathPickerCancel: "Hủy",
+    pathPickerDrives: "Ổ đĩa",
   },
   en: {
     pickerTitle: "Select workspace",
@@ -104,6 +107,9 @@ const STR = {
     stError: "Error",
     openWorkspaceButton: "Open workspace...",
     noOtherWorkspaces: "No other workspaces",
+    pathPickerSelect: "Select this folder",
+    pathPickerCancel: "Cancel",
+    pathPickerDrives: "Drives",
   },
 };
 
