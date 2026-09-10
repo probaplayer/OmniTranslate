@@ -16,6 +16,7 @@ from translation_core import (
     translate_chunk,
 )
 
+from server import agent_templates
 from server import workspace
 from server.node_registry import NodeBase, register_node
 
@@ -52,10 +53,16 @@ class LoadAgentFile(NodeBase):
 
     @classmethod
     def INPUT_TYPES(cls):
-        return {"required": {}}
+        return {
+            "required": {},
+            "optional": {"template": ("STRING", {"default": "workspace", "widget": "agent_template"})},
+        }
 
-    def execute(self, workspace_name: str) -> tuple:
-        path = workspace.get_workspace_path(workspace_name, "agent.md")
+    def execute(self, workspace_name: str, template: str = "workspace") -> tuple:
+        if template == "workspace":
+            path = workspace.get_workspace_path(workspace_name, "agent.md")
+        else:
+            path = agent_templates.resolve_template_path(template)
         return (load_agent_file(path),)
 
 

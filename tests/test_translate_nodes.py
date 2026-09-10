@@ -4,6 +4,7 @@ from translation_core import GlossaryEntry, LLMProvider
 from translation_core.chapters import load_chapters
 from translation_core.providers.openai_compatible import OpenAICompatibleProvider
 
+from server import agent_templates
 from server import workspace
 from server.node_registry import get_node_class
 from server.nodes import translate  # noqa: F401  (triggers registration)
@@ -29,6 +30,31 @@ def test_provider_node_creates_openai_compatible_provider():
 
 
 def test_load_agent_file_node_reads_seeded_file():
+    workspace.create_workspace("novel-a")
+    node = get_node_class("LoadAgentFile")()
+
+    result = node.execute(workspace_name="novel-a")
+
+    assert "Dịch sang tiếng Việt" in result[0]
+
+
+def test_load_agent_file_node_loads_a_shared_template(tmp_path, monkeypatch):
+    workspace.create_workspace("novel-a")
+    monkeypatch.setattr(agent_templates, "AGENTS_ROOT", tmp_path)
+    template_dir = tmp_path / "vn"
+    template_dir.mkdir()
+    (template_dir / "tien-hiep.md").write_text("Nội dung mẫu tiên hiệp", encoding="utf-8")
+    node = get_node_class("LoadAgentFile")()
+
+    result = node.execute(workspace_name="novel-a", template="vn/tien-hiep")
+
+    assert result == ("Nội dung mẫu tiên hiệp",)
+
+
+def test_load_agent_file_node_still_defaults_to_the_workspace_file():
+    """Confirms the pre-existing behavior survives unchanged: calling
+    execute() exactly like every test written before this feature existed
+    (no `template` argument at all) must keep reading workspace/agent.md."""
     workspace.create_workspace("novel-a")
     node = get_node_class("LoadAgentFile")()
 
