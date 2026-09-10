@@ -100,6 +100,21 @@ function renderInspector() {
       markActiveDirty();
     });
     panel.appendChild(field);
+
+    const config = spec[1] || {};
+    if (config.widget === "path") {
+      const browseButton = document.createElement("button");
+      browseButton.className = "inspector-browse-button";
+      browseButton.textContent = t("browseButton");
+      browseButton.addEventListener("click", () => {
+        openPathPicker(field.value, (chosen) => {
+          field.value = chosen;
+          node.properties[name] = chosen;
+          markActiveDirty();
+        });
+      });
+      panel.appendChild(browseButton);
+    }
   }
 
   const actions = document.createElement("div");

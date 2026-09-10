@@ -11,7 +11,7 @@ class LoadTextFile(NodeBase):
 
     @classmethod
     def INPUT_TYPES(cls):
-        return {"required": {"path": ("STRING", {"default": ""})}}
+        return {"required": {"path": ("STRING", {"default": "", "widget": "path"})}}
 
     def execute(self, path: str) -> tuple:
         content = Path(path).read_text(encoding="utf-8")
@@ -29,7 +29,7 @@ class SaveTextFile(NodeBase):
         return {
             "required": {
                 "text": ("STRING", {"default": ""}),
-                "path": ("STRING", {"default": ""}),
+                "path": ("STRING", {"default": "", "widget": "path"}),
             }
         }
 

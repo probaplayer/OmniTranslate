@@ -54,6 +54,7 @@ const STR = {
     pathPickerSelect: "Chọn thư mục này",
     pathPickerCancel: "Hủy",
     pathPickerDrives: "Ổ đĩa",
+    browseButton: "Duyệt...",
   },
   en: {
     pickerTitle: "Select workspace",
@@ -110,6 +111,7 @@ const STR = {
     pathPickerSelect: "Select this folder",
     pathPickerCancel: "Cancel",
     pathPickerDrives: "Drives",
+    browseButton: "Browse...",
   },
 };
 
