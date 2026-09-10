@@ -54,7 +54,13 @@ function closePathPicker() {
 }
 
 async function loadPathPickerDirectory(path) {
-  const response = await fetch(`/api/browse-directory?path=${encodeURIComponent(path)}`);
+  let response;
+  try {
+    response = await fetch(`/api/browse-directory?path=${encodeURIComponent(path)}`);
+  } catch (error) {
+    renderPathPickerError(t("pathPickerLoadError"));
+    return;
+  }
   if (!response.ok) {
     // The starting path (e.g. an old, now-deleted folder already in the
     // field) may not exist any more -- fall back to the drive list
@@ -66,6 +72,17 @@ async function loadPathPickerDirectory(path) {
   }
   const data = await response.json();
   renderPathPicker(data);
+}
+
+function renderPathPickerError(message) {
+  const overlay = document.getElementById("path-picker-overlay");
+  if (!overlay) return;
+  const list = overlay.querySelector(".path-picker-list");
+  list.innerHTML = "";
+  const errorEl = document.createElement("div");
+  errorEl.className = "path-picker-item";
+  errorEl.textContent = message;
+  list.appendChild(errorEl);
 }
 
 function renderPathPicker(data) {

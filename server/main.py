@@ -101,7 +101,7 @@ def browse_directory(path: str = ""):
         ]
         return {"path": None, "parent": None, "entries": entries}
 
-    target = Path(path)
+    target = Path(path).resolve()
     if not target.is_dir():
         raise HTTPException(
             status_code=400, detail="Path does not exist or is not a directory"
@@ -120,8 +120,10 @@ def browse_directory(path: str = ""):
             continue
 
     # A drive root is its own parent in pathlib (Path("C:/").parent == Path("C:/")) --
-    # without this check, "Up" from a drive root would loop on itself forever
-    # instead of surfacing the drive list.
+    # without this check, "Up" from a drive root would loop on itself forever.
+    # Instead, parent becomes None here, which tells the frontend to hide the
+    # "Up" row entirely at a drive root (not to auto-jump to the drive list --
+    # from here the user clears the field and reopens the picker for that).
     parent = str(target.parent) if target.parent != target else None
     return {"path": str(target), "parent": parent, "entries": entries}
 

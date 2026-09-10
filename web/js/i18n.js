@@ -54,6 +54,7 @@ const STR = {
     pathPickerSelect: "Chọn thư mục này",
     pathPickerCancel: "Hủy",
     pathPickerDrives: "Ổ đĩa",
+    pathPickerLoadError: "Không kết nối được tới server.",
     browseButton: "Duyệt...",
   },
   en: {
@@ -111,6 +112,7 @@ const STR = {
     pathPickerSelect: "Select this folder",
     pathPickerCancel: "Cancel",
     pathPickerDrives: "Drives",
+    pathPickerLoadError: "Could not reach the server.",
     browseButton: "Browse...",
   },
 };

@@ -6,6 +6,7 @@ from server.node_registry import (
     list_node_metadata,
     register_node,
 )
+from server.nodes import utility  # noqa: F401  (triggers registration)
 
 
 def test_register_and_get_node_class():
@@ -61,3 +62,15 @@ def test_list_node_metadata_includes_registered_node():
     assert entry["return_types"] == ["STRING"]
     assert entry["return_names"] == ["out"]
     assert entry["input_types"]["required"]["value"][0] == "STRING"
+
+
+def test_load_text_file_path_input_has_the_path_widget_flag():
+    metadata = {m["type"]: m for m in list_node_metadata()}
+    spec = metadata["LoadTextFile"]["input_types"]["required"]["path"]
+    assert spec[1]["widget"] == "path"
+
+
+def test_save_text_file_path_input_has_the_path_widget_flag():
+    metadata = {m["type"]: m for m in list_node_metadata()}
+    spec = metadata["SaveTextFile"]["input_types"]["required"]["path"]
+    assert spec[1]["widget"] == "path"
