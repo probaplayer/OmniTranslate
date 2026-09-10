@@ -1,0 +1,569 @@
+{
+  "last_node_id": 12,
+  "last_link_id": 13,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "Utility/LoadTextFile",
+      "pos": [
+        40,
+        40
+      ],
+      "size": {
+        "0": 200,
+        "1": 68
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "path",
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "path": "C:/novels/vi-du/chapters/chuong-1.txt"
+      },
+      "boxcolor": "#7ea6c9"
+    },
+    {
+      "id": 2,
+      "type": "Translation/Provider",
+      "pos": [
+        40,
+        150
+      ],
+      "size": {
+        "0": 200,
+        "1": 108
+      },
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "base_url",
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "name": "api_key",
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "name": "model",
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "provider",
+          "type": "PROVIDER",
+          "links": [
+            4,
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "base_url": "http://localhost:1234/v1",
+        "api_key": "lm-studio",
+        "model": "local-model"
+      },
+      "boxcolor": "#7fb98a"
+    },
+    {
+      "id": 3,
+      "type": "Translation/LoadAgentFile",
+      "pos": [
+        40,
+        300
+      ],
+      "size": {
+        "0": 200,
+        "1": 68
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "links": [
+            6
+          ]
+        }
+      ],
+      "properties": {},
+      "boxcolor": "#d9a44c"
+    },
+    {
+      "id": 4,
+      "type": "Translation/LoadGlossary",
+      "pos": [
+        40,
+        410
+      ],
+      "size": {
+        "0": 200,
+        "1": 68
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "glossary_entries",
+          "type": "GLOSSARY_ENTRIES",
+          "links": [
+            7,
+            8
+          ]
+        }
+      ],
+      "properties": {},
+      "boxcolor": "#c98a7e"
+    },
+    {
+      "id": 5,
+      "type": "Translation/LookupGlossary",
+      "pos": [
+        340,
+        40
+      ],
+      "size": {
+        "0": 200,
+        "1": 88
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "glossary_entries",
+          "type": "GLOSSARY_ENTRIES",
+          "link": 7
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "relevant_entries",
+          "type": "GLOSSARY_ENTRIES",
+          "links": [
+            9
+          ]
+        }
+      ],
+      "properties": {
+        "glossary_entries": "",
+        "text": ""
+      },
+      "boxcolor": "#c98a7e"
+    },
+    {
+      "id": 6,
+      "type": "Translation/Translate",
+      "pos": [
+        640,
+        40
+      ],
+      "size": {
+        "0": 200,
+        "1": 128
+      },
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "provider",
+          "type": "PROVIDER",
+          "link": 4
+        },
+        {
+          "name": "agent_instructions",
+          "type": "STRING",
+          "link": 6
+        },
+        {
+          "name": "source_text",
+          "type": "STRING",
+          "link": 2
+        },
+        {
+          "name": "glossary_entries",
+          "type": "GLOSSARY_ENTRIES",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "translated_text",
+          "type": "STRING",
+          "links": [
+            10
+          ]
+        }
+      ],
+      "properties": {
+        "provider": "",
+        "agent_instructions": "",
+        "source_text": "",
+        "glossary_entries": ""
+      },
+      "boxcolor": "#7fb98a"
+    },
+    {
+      "id": 7,
+      "type": "Translation/ExtractGlossary",
+      "pos": [
+        960,
+        40
+      ],
+      "size": {
+        "0": 200,
+        "1": 148
+      },
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "provider",
+          "type": "PROVIDER",
+          "link": 5
+        },
+        {
+          "name": "glossary_entries",
+          "type": "GLOSSARY_ENTRIES",
+          "link": 8
+        },
+        {
+          "name": "source_text",
+          "type": "STRING",
+          "link": 3
+        },
+        {
+          "name": "translated_text",
+          "type": "STRING",
+          "link": 10
+        },
+        {
+          "name": "chapter_id",
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "updated_glossary_entries",
+          "type": "GLOSSARY_ENTRIES",
+          "links": [
+            11
+          ]
+        },
+        {
+          "name": "corrected_translated_text",
+          "type": "STRING",
+          "links": [
+            12
+          ]
+        },
+        {
+          "name": "revision_note",
+          "type": "STRING",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "properties": {
+        "provider": "",
+        "glossary_entries": "",
+        "source_text": "",
+        "translated_text": "",
+        "chapter_id": "chuong-1"
+      },
+      "boxcolor": "#7fb98a"
+    },
+    {
+      "id": 8,
+      "type": "Utility/SaveTextFile",
+      "pos": [
+        1280,
+        40
+      ],
+      "size": {
+        "0": 200,
+        "1": 88
+      },
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 12
+        },
+        {
+          "name": "path",
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "properties": {
+        "text": "",
+        "path": "C:/novels/vi-du/output/chuong-1-vi.txt"
+      },
+      "boxcolor": "#9b8fc4"
+    },
+    {
+      "id": 9,
+      "type": "Translation/SaveGlossary",
+      "pos": [
+        1280,
+        170
+      ],
+      "size": {
+        "0": 200,
+        "1": 68
+      },
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "glossary_entries",
+          "type": "GLOSSARY_ENTRIES",
+          "link": 11
+        }
+      ],
+      "properties": {
+        "glossary_entries": ""
+      },
+      "boxcolor": "#c98a7e"
+    },
+    {
+      "id": 10,
+      "type": "Translation/RecordChapter",
+      "pos": [
+        1280,
+        280
+      ],
+      "size": {
+        "0": 200,
+        "1": 108
+      },
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "chapter_id",
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "name": "source_path",
+          "type": "STRING",
+          "link": null
+        },
+        {
+          "name": "output_path",
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "properties": {
+        "chapter_id": "chuong-1",
+        "source_path": "C:/novels/vi-du/chapters/chuong-1.txt",
+        "output_path": "C:/novels/vi-du/output/chuong-1-vi.txt"
+      },
+      "boxcolor": "#c98a7e"
+    },
+    {
+      "id": 11,
+      "type": "Utility/TextPreview",
+      "pos": [
+        1280,
+        430
+      ],
+      "size": {
+        "0": 200,
+        "1": 68
+      },
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 13
+        }
+      ],
+      "properties": {
+        "text": ""
+      },
+      "boxcolor": "#8d949e"
+    },
+    {
+      "id": 12,
+      "type": "Utility/Note",
+      "pos": [
+        640,
+        220
+      ],
+      "size": {
+        "0": 200,
+        "1": 68
+      },
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "properties": {
+        "text": "HƯỚNG DẪN SỬ DỤNG MẪU (TEMPLATE)\n\n1) Đổi trường 'model' ở node Provider thành đúng tên model bạn đã nạp trong LM Studio (base_url và api_key mặc định đã khớp với LM Studio chạy local, chỉnh lại nếu bạn dùng cổng/API key khác).\n\n2) Sửa 3 đường dẫn cho khớp máy của bạn: LoadTextFile.path (file chương nguồn), SaveTextFile.path (nơi ghi bản dịch), và RecordChapter.source_path / output_path (nên trùng với hai đường dẫn trên). Bạn có thể bấm nút 'Duyệt...' đã có sẵn trên các trường đường dẫn, hoặc gõ trực tiếp đường dẫn.\n\n3) Để dùng mẫu này: sao chép nội dung file lm-studio-glossary-workflow.json vào file graph.json của một workspace (workspaces/<tên-workspace>/graph.json), rồi mở workspace đó trong ứng dụng.\n\n4) EvaluateAndFixChapters là node riêng, chạy khi cần (không nằm trong mẫu này) — dùng để rà soát và sửa lại các chương cũ theo định kỳ khi bạn muốn."
+      },
+      "boxcolor": "#8d949e"
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      5,
+      1,
+      "STRING"
+    ],
+    [
+      2,
+      1,
+      0,
+      6,
+      2,
+      "STRING"
+    ],
+    [
+      3,
+      1,
+      0,
+      7,
+      2,
+      "STRING"
+    ],
+    [
+      4,
+      2,
+      0,
+      6,
+      0,
+      "PROVIDER"
+    ],
+    [
+      5,
+      2,
+      0,
+      7,
+      0,
+      "PROVIDER"
+    ],
+    [
+      6,
+      3,
+      0,
+      6,
+      1,
+      "STRING"
+    ],
+    [
+      7,
+      4,
+      0,
+      5,
+      0,
+      "GLOSSARY_ENTRIES"
+    ],
+    [
+      8,
+      4,
+      0,
+      7,
+      1,
+      "GLOSSARY_ENTRIES"
+    ],
+    [
+      9,
+      5,
+      0,
+      6,
+      3,
+      "GLOSSARY_ENTRIES"
+    ],
+    [
+      10,
+      6,
+      0,
+      7,
+      3,
+      "STRING"
+    ],
+    [
+      11,
+      7,
+      0,
+      9,
+      0,
+      "GLOSSARY_ENTRIES"
+    ],
+    [
+      12,
+      7,
+      1,
+      8,
+      0,
+      "STRING"
+    ],
+    [
+      13,
+      7,
+      2,
+      11,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}

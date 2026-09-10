@@ -161,14 +161,12 @@ async def ws_run(websocket: WebSocket, workspace_name: str):
     data = await websocket.receive_json()
     graph = data["graph"]
 
-    # Nothing downstream checks that the workspace named in the URL exists, and
-    # the NEEDS_WORKSPACE nodes happily create what they need on demand
-    # (chromadb.PersistentClient auto-creates parent directories), so a typo'd
-    # name would materialise an orphaned workspaces/<name>/rag_index/ with no
-    # config.json or graph.json -- which then shows up in the workspace picker
-    # and errors when clicked. Refuse the run before the worker thread (and any
-    # filesystem access) starts. open_workspace is the same existence check the
-    # HTTP endpoints use; it also rejects invalid/traversing names.
+    # Nothing downstream checks that the workspace named in the URL exists.
+    # A NEEDS_WORKSPACE node given a nonexistent name would surface a raw,
+    # unhelpful FileNotFoundError deep inside its own file I/O instead of a
+    # clear validation error -- refuse the run up front instead.
+    # open_workspace is the same existence check the HTTP endpoints use; it
+    # also rejects invalid/traversing names.
     try:
         workspace.open_workspace(workspace_name)
     except workspace.WorkspaceError as exc:

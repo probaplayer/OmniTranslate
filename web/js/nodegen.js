@@ -6,9 +6,13 @@ const NODE_TYPE_META = {
   Provider: { icon: "✦", color: "#7fb98a" },
   LoadAgentFile: { icon: "◈", color: "#d9a44c" },
   SaveAgentFile: { icon: "◆", color: "#d9a44c" },
-  RAGQuery: { icon: "◎", color: "#c98a7e" },
-  SaveToRAG: { icon: "◉", color: "#c98a7e" },
   Translate: { icon: "⇄", color: "#7fb98a" },
+  LoadGlossary: { icon: "▷", color: "#c98a7e" },
+  SaveGlossary: { icon: "◀", color: "#c98a7e" },
+  LookupGlossary: { icon: "◎", color: "#c98a7e" },
+  RecordChapter: { icon: "◉", color: "#c98a7e" },
+  ExtractGlossary: { icon: "✧", color: "#7fb98a" },
+  EvaluateAndFixChapters: { icon: "⟲", color: "#7fb98a" },
 };
 const NODE_TYPE_META_FALLBACK = { icon: "●", color: "#767d88" };
 

@@ -121,14 +121,18 @@ const NODE_TYPE_LABELS = {
   vi: {
     LoadTextFile: "ĐỌC FILE", SaveTextFile: "GHI FILE", TextPreview: "XEM TRƯỚC",
     Note: "GHI CHÚ", Provider: "NGUỒN MODEL", LoadAgentFile: "ĐỌC AGENT",
-    SaveAgentFile: "GHI AGENT", RAGQuery: "TRUY VẤN RAG", SaveToRAG: "LƯU RAG",
-    Translate: "DỊCH",
+    SaveAgentFile: "GHI AGENT", Translate: "DỊCH",
+    LoadGlossary: "ĐỌC GLOSSARY", SaveGlossary: "GHI GLOSSARY", LookupGlossary: "TRA GLOSSARY",
+    RecordChapter: "GHI CHƯƠNG", ExtractGlossary: "TRÍCH GLOSSARY",
+    EvaluateAndFixChapters: "RÀ SOÁT CHƯƠNG",
   },
   en: {
     LoadTextFile: "LOAD FILE", SaveTextFile: "SAVE FILE", TextPreview: "PREVIEW",
     Note: "NOTE", Provider: "MODEL SOURCE", LoadAgentFile: "LOAD AGENT",
-    SaveAgentFile: "SAVE AGENT", RAGQuery: "RAG QUERY", SaveToRAG: "SAVE TO RAG",
-    Translate: "TRANSLATE",
+    SaveAgentFile: "SAVE AGENT", Translate: "TRANSLATE",
+    LoadGlossary: "LOAD GLOSSARY", SaveGlossary: "SAVE GLOSSARY", LookupGlossary: "LOOKUP GLOSSARY",
+    RecordChapter: "RECORD CHAPTER", ExtractGlossary: "EXTRACT GLOSSARY",
+    EvaluateAndFixChapters: "EVALUATE & FIX CHAPTERS",
   },
 };
 
@@ -137,15 +141,21 @@ const NODE_TYPE_DESCS = {
     LoadTextFile: "Đọc file text", SaveTextFile: "Ghi file text",
     TextPreview: "Xem trước nội dung", Note: "Ghi chú tự do",
     Provider: "Kết nối API/LM Studio", LoadAgentFile: "Đọc file agent",
-    SaveAgentFile: "Ghi file agent", RAGQuery: "Truy vấn RAG",
-    SaveToRAG: "Lưu vào RAG", Translate: "Dịch văn bản",
+    SaveAgentFile: "Ghi file agent", Translate: "Dịch văn bản",
+    LoadGlossary: "Đọc glossary.json", SaveGlossary: "Ghi glossary.json",
+    LookupGlossary: "Tìm thuật ngữ liên quan", RecordChapter: "Ghi nhận 1 chương đã dịch",
+    ExtractGlossary: "Trích & giải quyết xung đột thuật ngữ",
+    EvaluateAndFixChapters: "Rà soát & sửa chương gần đây",
   },
   en: {
     LoadTextFile: "Read a text file", SaveTextFile: "Write a text file",
     TextPreview: "Preview text content", Note: "Freeform note",
     Provider: "API or LM Studio connection", LoadAgentFile: "Read the agent file",
-    SaveAgentFile: "Write the agent file", RAGQuery: "Query the RAG store",
-    SaveToRAG: "Save into the RAG store", Translate: "Translate text",
+    SaveAgentFile: "Write the agent file", Translate: "Translate text",
+    LoadGlossary: "Load glossary.json", SaveGlossary: "Save glossary.json",
+    LookupGlossary: "Find relevant terms", RecordChapter: "Record a translated chapter",
+    ExtractGlossary: "Extract terms & resolve conflicts",
+    EvaluateAndFixChapters: "Review & fix recent chapters",
   },
 };
 

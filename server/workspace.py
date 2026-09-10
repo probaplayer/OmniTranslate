@@ -103,6 +103,8 @@ def create_workspace(name: str, source_lang: str = "", target_lang: str = "") ->
     )
     (ws_dir / "graph.json").write_text(json.dumps(_DEFAULT_GRAPH), encoding="utf-8")
     (ws_dir / "agent.md").write_text(_DEFAULT_AGENT_FILE, encoding="utf-8")
+    (ws_dir / "glossary.json").write_text(json.dumps({"entries": []}), encoding="utf-8")
+    (ws_dir / "chapters.json").write_text(json.dumps({"chapters": []}), encoding="utf-8")
 
 
 def open_workspace(name: str) -> dict:

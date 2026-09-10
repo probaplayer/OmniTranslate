@@ -8,6 +8,7 @@ from pathlib import Path
 from server import main as server_main
 from server import workspace
 from server.main import app
+from translation_core.glossary import GlossaryEntry, save_glossary
 
 
 @pytest.fixture(autouse=True)
@@ -20,8 +21,9 @@ def ws_workspace():
     """A real workspace on disk, named "any", for the /ws/run/{name} tests.
 
     ws_run refuses to run a graph against a workspace that does not exist --
-    otherwise a typo'd name lets the RAG nodes materialise a phantom
-    workspaces/<name>/rag_index/ tree -- so these tests need one to exist.
+    otherwise a NEEDS_WORKSPACE node's own file I/O would surface a raw,
+    unhelpful FileNotFoundError instead of a clear validation error -- so
+    these tests need a real workspace to exist.
     """
     workspace.create_workspace("any")
     return "any"
@@ -359,31 +361,22 @@ def test_websocket_run_with_provider_node_streams_serializable_events(ws_workspa
     ]
 
 
-def test_websocket_run_with_rag_nodes_streams_serializable_events(ws_workspace):
-    """Same regression guard for the RAG_EXAMPLES path.
+def test_websocket_run_with_glossary_nodes_streams_serializable_events(ws_workspace):
+    """Regression guard for the GLOSSARY_ENTRIES path.
 
-    RAGQuery returns `list[RAGExample]` -- a list of dataclass instances,
-    equally unserializable. Uses a real RAGStore (real chromadb + real
-    embeddings), matching tests/test_translate_nodes.py, so it is slow.
+    LookupGlossary returns `list[GlossaryEntry]` -- a list of dataclass
+    instances, unserializable as-is -- the same shape of bug this guarded
+    against for RAG_EXAMPLES before RAGQuery/SaveToRAG were replaced.
     """
+    save_glossary(
+        workspace.get_workspace_path(ws_workspace, "glossary.json"),
+        [GlossaryEntry(term="世界", translation="thế giới", note="", chapter_id="ch0")],
+    )
+
     client = TestClient(app)
     graph = {
         "nodes": [
-            # SaveToRAG declares no outputs, so it cannot be wired to RAGQuery.
-            # It is listed first instead: among nodes with no dependencies,
-            # topological_order preserves declaration order, so this runs (and
-            # populates the index) before RAGQuery reads it. RAGQuery must find
-            # at least one row -- an empty list would serialize fine and defeat
-            # the placeholder assertion below.
-            {
-                "id": "1",
-                "type": "SaveToRAG",
-                "inputs": {
-                    "chapter_id": "ch1",
-                    "source_text": "こんにちは世界",
-                    "translated_text": "Xin chào thế giới",
-                },
-            },
+            {"id": "1", "type": "LoadGlossary", "inputs": {}},
             {
                 "id": "2",
                 "type": "Provider",
@@ -395,8 +388,8 @@ def test_websocket_run_with_rag_nodes_streams_serializable_events(ws_workspace):
             },
             {
                 "id": "3",
-                "type": "RAGQuery",
-                "inputs": {"text": "こんにちは世界", "top_k": "3"},
+                "type": "LookupGlossary",
+                "inputs": {"text": "こんにちは世界"},
             },
             {
                 "id": "4",
@@ -409,6 +402,12 @@ def test_websocket_run_with_rag_nodes_streams_serializable_events(ws_workspace):
         ],
         "links": [
             {
+                "from_node": "1",
+                "from_output": "glossary_entries",
+                "to_node": "3",
+                "to_input": "glossary_entries",
+            },
+            {
                 "from_node": "2",
                 "from_output": "provider",
                 "to_node": "4",
@@ -416,9 +415,9 @@ def test_websocket_run_with_rag_nodes_streams_serializable_events(ws_workspace):
             },
             {
                 "from_node": "3",
-                "from_output": "rag_examples",
+                "from_output": "relevant_entries",
                 "to_node": "4",
-                "to_input": "rag_examples",
+                "to_input": "glossary_entries",
             },
         ],
     }
@@ -429,35 +428,26 @@ def test_websocket_run_with_rag_nodes_streams_serializable_events(ws_workspace):
 
     assert json.dumps(events)
 
-    rag_completed = next(
+    lookup_completed = next(
         e for e in events if e["event"] == "node_completed" and e["node_id"] == "3"
     )
-    assert rag_completed["outputs"] == ["<list>"]
+    assert lookup_completed["outputs"] == ["<list>"]
 
-    # Translate still fails on its HTTP call, and the run still finishes.
-    assert any(
-        e["event"] == "node_error" and e["node_id"] == "4" for e in events
-    )
+    assert any(e["event"] == "node_error" and e["node_id"] == "4" for e in events)
     assert events[-1]["event"] == "run_finished"
 
 
 def test_websocket_run_against_missing_workspace_errors_and_creates_nothing():
     """A typo'd workspace name must not materialise a phantom directory.
 
-    chromadb.PersistentClient auto-creates its parents, so a RAG node running
-    against a nonexistent workspace would leave behind a
-    workspaces/<name>/rag_index/ with no config.json or graph.json -- which
-    then lists in the workspace picker and 422s when clicked.
+    Any NEEDS_WORKSPACE node's file I/O (LoadGlossary here) must never run
+    against a workspace name that was never validated to exist -- ws_run's
+    upfront existence check must reject the run before any node's execute()
+    does anything.
     """
     client = TestClient(app)
     graph = {
-        "nodes": [
-            {
-                "id": "1",
-                "type": "RAGQuery",
-                "inputs": {"text": "anything", "top_k": "3"},
-            }
-        ],
+        "nodes": [{"id": "1", "type": "LoadGlossary", "inputs": {}}],
         "links": [],
     }
 
