@@ -77,14 +77,21 @@
     #toolbar a { color: var(--text-dim); text-decoration: none; }
     #toolbar a:hover { color: var(--text); }
 
-    #workspace-tabs {
+    #workspace-tabs-row {
       display: flex;
       align-items: center;
       gap: 6px;
       background: var(--bg-elevated);
       border-bottom: 1px solid var(--border-soft);
       padding: 6px 12px;
+    }
+    #workspace-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       overflow-x: auto;
+      flex: 1;
+      min-width: 0;
     }
     .workspace-tab {
       display: flex;
@@ -348,9 +355,11 @@
         <button id="lang-vi-button">VI</button>
         <button id="lang-en-button">EN</button>
       </div>
-      <div id="workspace-tabs">
-        <button id="new-tab-button" data-i18n-title="newTabButton" title="+ Workspace mới">+</button>
-        <div style="position: relative;">
+      <div id="workspace-tabs-row">
+        <div id="workspace-tabs">
+          <button id="new-tab-button" data-i18n-title="newTabButton" title="+ Workspace mới">+</button>
+        </div>
+        <div style="position: relative; flex-shrink: 0;">
           <button id="open-workspace-button" data-i18n="openWorkspaceButton">Mở workspace...</button>
         </div>
       </div>

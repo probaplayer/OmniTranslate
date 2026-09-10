@@ -96,6 +96,7 @@ function closeTab(id) {
 
   const index = tabs.indexOf(tab);
   tabs.splice(index, 1);
+  tab.graph.stop();
 
   if (tabs.length === 0) {
     activateTab(createTabForGraph(null, new LGraph()));
@@ -143,6 +144,10 @@ async function toggleOpenWorkspaceMenu() {
     return;
   }
   const response = await fetch("/api/workspaces");
+  if (!response.ok) {
+    setStatus(`${t("statusLoadWorkspaceError")}${response.status}`, "error");
+    return;
+  }
   const data = await response.json();
   const openNames = new Set(tabs.map((t) => t.workspaceName).filter(Boolean));
   const available = data.workspaces.filter((name) => !openNames.has(name));
