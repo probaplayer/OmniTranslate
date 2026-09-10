@@ -7,6 +7,7 @@ from pathlib import Path
 
 from server import main as server_main
 from server import workspace
+from server import agent_templates
 from server.main import app
 from translation_core.glossary import GlossaryEntry, save_glossary
 
@@ -572,3 +573,15 @@ def test_browse_directory_skips_permission_denied_subfolder(tmp_path, monkeypatc
     assert response.status_code == 200
     names = {e["name"] for e in response.json()["entries"]}
     assert names == {"ok"}
+
+
+def test_get_agent_templates_returns_grouped_list(tmp_path, monkeypatch):
+    (tmp_path / "vn").mkdir()
+    (tmp_path / "vn" / "tien-hiep.md").write_text("x", encoding="utf-8")
+    monkeypatch.setattr(agent_templates, "AGENTS_ROOT", tmp_path)
+
+    client = TestClient(app)
+    response = client.get("/api/agent-templates")
+
+    assert response.status_code == 200
+    assert response.json() == {"vn": ["tien-hiep"]}
