@@ -5,3 +5,4 @@ workspaces/
 web/vendor/
 .worktrees/
 .pytest_cache/
+template_translation_workflow
