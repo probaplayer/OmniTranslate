@@ -491,43 +491,6 @@
       padding: 1px 6px;
     }
 
-    #batch-panel {
-      position: absolute;
-      right: 14px;
-      top: 14px;
-      width: 268px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 14px;
-      box-sizing: border-box;
-    }
-    #batch-panel[hidden] { display: none; }
-    #batch-panel label {
-      color: var(--text-faint);
-      display: block;
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-    }
-    #batch-panel input {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      color: var(--text);
-      padding: 6px 8px;
-      width: 100%;
-      box-sizing: border-box;
-      margin-bottom: 10px;
-    }
-    #batch-message {
-      color: var(--text-muted);
-      font-size: 12.5px;
-      line-height: 1.5;
-      margin-top: 8px;
-    }
-
     #inspector-panel {
       width: 344px;
       flex-shrink: 0;
@@ -617,11 +580,10 @@
     <div id="canvas-column">
       <div id="toolbar">
         <span data-i18n="brand" style="font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); margin-right: 4px;">OMNITRANSLATE STUDIO</span>
-        <button id="batch-toggle-button" data-i18n="batchToggleButton">Hàng loạt</button>
-        <button id="run-button" data-i18n="runAllButton">Run</button>
-        <button id="save-button" data-i18n="saveButton">Save</button>
         <span id="status" class="status-info"></span>
         <span style="flex: 1;"></span>
+        <button id="run-button" data-i18n="runAllButton">Run</button>
+        <button id="save-button" data-i18n="saveButton">Save</button>
         <button id="settings-button" data-i18n-title="settingsButton" title="Cài đặt">⚙</button>
         <div id="lang-toggle" class="lang-toggle">
           <button id="lang-vi-button" class="lang-toggle-button">VI</button>
@@ -639,17 +601,6 @@
       <div id="canvas-area">
         <canvas id="graph-canvas"></canvas>
         <canvas id="minimap" width="176" height="112"></canvas>
-        <div id="batch-panel" hidden>
-          <div data-i18n="batchTitle" style="font-size: 13px; font-weight: 600; margin-bottom: 10px;">Chạy hàng loạt chương</div>
-          <label data-i18n="batchFrom">Từ chương</label>
-          <input id="batch-from" />
-          <label data-i18n="batchTo">Đến chương</label>
-          <input id="batch-to" />
-          <label data-i18n="batchConcurrency">Chạy song song</label>
-          <input id="batch-concurrency" type="number" min="1" max="6" value="1" />
-          <button id="batch-start-button" data-i18n="batchStart" style="width: 100%; background: var(--accent); border: none; color: var(--accent-text); font-weight: 600; padding: 9px; border-radius: 6px; cursor: pointer;">Bắt đầu</button>
-          <div id="batch-message"></div>
-        </div>
       </div>
       <div id="log-console">
         <div id="log-console-header">
@@ -671,7 +622,6 @@
   <script src="/js/agent_template_picker.js"></script>
   <script src="/js/settings_panel.js"></script>
   <script src="/js/inspector_panel.js"></script>
-  <script src="/js/batch_panel.js"></script>
   <script src="/js/minimap.js"></script>
   <script src="/js/log_console.js"></script>
   <script src="/js/workspace_tabs.js"></script>

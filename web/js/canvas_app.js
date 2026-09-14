@@ -53,7 +53,6 @@ async function init() {
   initInspectorPanel(nodeMetadataList, canvas);
   initLogConsole();
   initMinimap(canvas, canvasEl);
-  initBatchPanel();
   initSettingsPanel(canvas);
 
   await initWorkspaceTabs();
