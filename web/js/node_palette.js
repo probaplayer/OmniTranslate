@@ -93,6 +93,13 @@ function initNodePalette(nodeMetadataList, canvas, canvasEl) {
         const defaultPath = defaultOutputPathFor(getActiveWorkspaceName());
         if (defaultPath) node.properties.path = defaultPath;
       }
+      if (node.constructor.nodeType === "Provider") {
+        // The backend's own declared default ("600") is already non-empty,
+        // unlike SaveTextFile's blank path default above, so there's no
+        // falsy value to gate on here -- this only ever runs for a node
+        // this handler just created, never one restored via configure().
+        node.properties.timeout_seconds = defaultProviderTimeoutSeconds();
+      }
 
       activeGraph.add(node);
       markActiveDirty();

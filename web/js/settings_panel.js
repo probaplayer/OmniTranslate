@@ -3,6 +3,7 @@
 // or saved into a workspace's graph.json, so plain localStorage is enough.
 
 const SETTINGS_STORAGE_KEY = "appSettings";
+const DEFAULT_PROVIDER_TIMEOUT_SECONDS = "600";
 
 function loadSettings() {
   let stored = {};
@@ -15,6 +16,7 @@ function loadSettings() {
     theme: stored.theme === "light" ? "light" : "dark",
     linkStyle: stored.linkStyle === "orthogonal" ? "orthogonal" : "curved",
     outputRoot: stored.outputRoot || "",
+    providerTimeoutSeconds: stored.providerTimeoutSeconds || DEFAULT_PROVIDER_TIMEOUT_SECONDS,
   };
 }
 
@@ -24,8 +26,45 @@ function persistSettings() {
   localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(appSettings));
 }
 
-function applyTheme() {
+// litegraph draws nodes/links directly on <canvas>, not through CSS, so
+// switching data-theme alone (which only re-paints CSS-driven chrome) never
+// touches the workspace itself -- these are the same colors as the CSS
+// tokens in style.css's :root / :root[data-theme="light"], applied to
+// litegraph's own color knobs instead.
+const CANVAS_THEME_COLORS = {
+  dark: {
+    background: "#101216",
+    nodeBg: "#1a1d23",
+    nodeBorder: "#2a2f37",
+    titleText: "#9aa1ab",
+    bodyText: "#aaaaaa",
+    link: "#d9a44c",
+  },
+  light: {
+    background: "#f4f3f0",
+    nodeBg: "#ffffff",
+    nodeBorder: "#d8d5cd",
+    titleText: "#55534c",
+    bodyText: "#33322e",
+    link: "#b5792e",
+  },
+};
+
+function applyTheme(canvas) {
   document.documentElement.setAttribute("data-theme", appSettings.theme);
+
+  const colors = CANVAS_THEME_COLORS[appSettings.theme] || CANVAS_THEME_COLORS.dark;
+  LiteGraph.NODE_DEFAULT_BGCOLOR = colors.nodeBg;
+  LiteGraph.NODE_DEFAULT_COLOR = colors.nodeBorder;
+  LiteGraph.NODE_TEXT_COLOR = colors.bodyText;
+  if (!canvas) return;
+  // node_title_color/default_link_color are copied from the LiteGraph
+  // globals only once, at LGraphCanvas construction time -- past that point
+  // only the instance properties themselves have any effect on drawing.
+  canvas.node_title_color = colors.titleText;
+  canvas.default_link_color = colors.link;
+  canvas.clear_background_color = colors.background;
+  canvas.setDirty(true, true);
 }
 
 function applyLinkStyle(canvas) {
@@ -52,8 +91,15 @@ function defaultOutputPathFor(workspaceName) {
   return `${root}${workspaceName}${sep}`;
 }
 
+// Used to prefill a freshly-dropped Provider node's `timeout_seconds`
+// property -- like defaultOutputPathFor, never called on nodes restored
+// from a saved graph, so a workspace saved with a different value keeps it.
+function defaultProviderTimeoutSeconds() {
+  return appSettings.providerTimeoutSeconds || DEFAULT_PROVIDER_TIMEOUT_SECONDS;
+}
+
 function initSettingsPanel(canvas) {
-  applyTheme();
+  applyTheme(canvas);
   applyLinkStyle(canvas);
   const button = document.getElementById("settings-button");
   if (button) button.addEventListener("click", () => openSettingsPanel(canvas));
@@ -93,7 +139,7 @@ function openSettingsPanel(canvas) {
       (value) => {
         appSettings.theme = value;
         persistSettings();
-        applyTheme();
+        applyTheme(canvas);
       }
     )
   );
@@ -137,6 +183,29 @@ function openSettingsPanel(canvas) {
   });
   pathRow.appendChild(browseButton);
   modal.appendChild(pathRow);
+
+  const timeoutRow = document.createElement("div");
+  timeoutRow.className = "settings-row";
+  const timeoutLabel = document.createElement("label");
+  timeoutLabel.textContent = t("settingsTimeoutLabel");
+  timeoutRow.appendChild(timeoutLabel);
+
+  const timeoutInput = document.createElement("input");
+  timeoutInput.type = "text";
+  timeoutInput.inputMode = "numeric";
+  timeoutInput.className = "settings-text-input";
+  timeoutInput.value = appSettings.providerTimeoutSeconds;
+  timeoutInput.addEventListener("change", () => {
+    const parsed = parseFloat(timeoutInput.value);
+    appSettings.providerTimeoutSeconds =
+      Number.isFinite(parsed) && parsed > 0
+        ? String(parsed)
+        : DEFAULT_PROVIDER_TIMEOUT_SECONDS;
+    timeoutInput.value = appSettings.providerTimeoutSeconds;
+    persistSettings();
+  });
+  timeoutRow.appendChild(timeoutInput);
+  modal.appendChild(timeoutRow);
 
   const actions = document.createElement("div");
   actions.className = "settings-panel-actions";

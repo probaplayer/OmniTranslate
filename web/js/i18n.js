@@ -74,6 +74,7 @@ const STR = {
     settingsLinkStyleOrthogonal: "Vuông góc",
     settingsOutputPathLabel: "Thư mục output mặc định",
     settingsOutputPathEmpty: "Chưa chọn — mỗi node SaveTextFile tự nhập đường dẫn riêng",
+    settingsTimeoutLabel: "Timeout mặc định cho Provider (giây)",
     settingsClose: "Đóng",
   },
   en: {
@@ -151,6 +152,7 @@ const STR = {
     settingsLinkStyleOrthogonal: "Orthogonal",
     settingsOutputPathLabel: "Default output folder",
     settingsOutputPathEmpty: "Not set — each SaveTextFile node enters its own path",
+    settingsTimeoutLabel: "Default Provider timeout (seconds)",
     settingsClose: "Close",
   },
 };
