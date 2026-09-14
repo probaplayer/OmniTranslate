@@ -81,8 +81,22 @@ function registerDynamicNodeTypes(nodeMetadataList) {
       const tm = NODE_TYPE_META[this.constructor.nodeType] || NODE_TYPE_META_FALLBACK;
       const w = this.size[0];
       const h = this.size[1];
+      const isRunning = this._runStatus === "running";
+      // 0..1 breathing pulse, ~1.7s per cycle -- only ever computed while
+      // running, so an idle/done/error node costs nothing extra to draw.
+      const pulse = isRunning ? 0.5 + 0.5 * Math.sin(Date.now() / 260) : 0;
 
       ctx.save();
+
+      // A running node gets its own glowing outline -- visible at a glance
+      // without having to read the small footer status text.
+      if (isRunning) {
+        ctx.strokeStyle = RUN_STATUS_COLOR.running;
+        ctx.globalAlpha = 0.5 + 0.5 * pulse;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, w - 2, h - 2);
+        ctx.globalAlpha = 1;
+      }
 
       // Header row: icon + uppercase type label, in the type's color.
       ctx.fillStyle = tm.color;
@@ -104,7 +118,7 @@ function registerDynamicNodeTypes(nodeMetadataList) {
       const statusColor = RUN_STATUS_COLOR[this._runStatus] || RUN_STATUS_COLOR.idle;
       ctx.fillStyle = statusColor;
       ctx.beginPath();
-      ctx.arc(10, dotY, 3, 0, Math.PI * 2);
+      ctx.arc(10, dotY, isRunning ? 3 + pulse * 1.5 : 3, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.fillStyle = statusColor;

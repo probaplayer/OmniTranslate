@@ -58,6 +58,25 @@ async function init() {
   await initWorkspaceTabs();
 }
 
+// litegraph only actually redraws when something marks the canvas dirty
+// (see LGraphCanvas.prototype.draw) -- a node's pulsing "running" dot/border
+// is computed from Date.now() in onDrawForeground, so without this nothing
+// would ever trigger the next frame to pick up the new pulse value and the
+// node would just sit at whatever phase it happened to be drawn at.
+let runStatusAnimationTimer = null;
+
+function ensureRunStatusAnimation(graph) {
+  if (runStatusAnimationTimer) return;
+  runStatusAnimationTimer = setInterval(() => {
+    if (!graph._nodes.some((n) => n._runStatus === "running")) {
+      clearInterval(runStatusAnimationTimer);
+      runStatusAnimationTimer = null;
+      return;
+    }
+    graph.setDirtyCanvas(true, false);
+  }, 80);
+}
+
 function runGraph() {
   const activeGraph = getActiveGraph();
   const activeWorkspaceName = getActiveWorkspaceName();
@@ -91,8 +110,10 @@ function runGraph() {
     }
     const node = activeGraph.getNodeById(Number(event.node_id));
     if (node) {
-      if (event.event === "node_started") node._runStatus = "running";
-      else if (event.event === "node_completed") node._runStatus = "done";
+      if (event.event === "node_started") {
+        node._runStatus = "running";
+        ensureRunStatusAnimation(activeGraph);
+      } else if (event.event === "node_completed") node._runStatus = "done";
       else node._runStatus = "error";
       node._runStatusAt = Date.now();
       activeGraph.setDirtyCanvas(true, true);
