@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from server import workspace
+from server import agent_templates
 from server.executor import GraphValidationError, run_graph
 from server.node_registry import list_node_metadata
 from server.nodes import utility  # noqa: F401  (triggers registration)
@@ -68,6 +69,11 @@ def health_check():
 @app.get("/api/nodes")
 def get_nodes():
     return list_node_metadata()
+
+
+@app.get("/api/agent-templates")
+def get_agent_templates():
+    return agent_templates.list_templates()
 
 
 @app.get("/api/workspaces")

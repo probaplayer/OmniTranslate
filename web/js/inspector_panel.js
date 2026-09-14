@@ -114,6 +114,18 @@ function renderInspector() {
         });
       });
       panel.appendChild(browseButton);
+    } else if (config.widget === "agent_template") {
+      const chooseButton = document.createElement("button");
+      chooseButton.className = "inspector-browse-button";
+      chooseButton.textContent = t("agentTemplateButton");
+      chooseButton.addEventListener("click", () => {
+        openAgentTemplatePicker((chosen) => {
+          field.value = chosen;
+          node.properties[name] = chosen;
+          markActiveDirty();
+        });
+      });
+      panel.appendChild(chooseButton);
     }
   }
 

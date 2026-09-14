@@ -56,6 +56,10 @@ const STR = {
     pathPickerDrives: "Ổ đĩa",
     pathPickerLoadError: "Không kết nối được tới server.",
     browseButton: "Duyệt...",
+    agentTemplateButton: "Chọn agent...",
+    agentTemplateWorkspaceOption: "Tùy chỉnh riêng cho workspace này",
+    agentTemplateCancel: "Hủy",
+    agentTemplateLoadError: "Không kết nối được tới server.",
   },
   en: {
     pickerTitle: "Select workspace",
@@ -114,6 +118,10 @@ const STR = {
     pathPickerDrives: "Drives",
     pathPickerLoadError: "Could not reach the server.",
     browseButton: "Browse...",
+    agentTemplateButton: "Choose agent...",
+    agentTemplateWorkspaceOption: "Custom for this workspace",
+    agentTemplateCancel: "Cancel",
+    agentTemplateLoadError: "Could not reach the server.",
   },
 };
 
