@@ -15,6 +15,7 @@ from server.executor import GraphValidationError, run_graph
 from server.node_registry import list_node_metadata
 from server.nodes import utility  # noqa: F401  (triggers registration)
 from server.nodes import translate as translate_nodes  # noqa: F401  (triggers registration)
+from translation_core import ProviderConfig, ProviderError, create_provider
 
 app = FastAPI()
 
@@ -40,6 +41,12 @@ class CreateWorkspaceRequest(BaseModel):
 
 class RenameWorkspaceRequest(BaseModel):
     new_name: str
+
+
+class TestProviderRequest(BaseModel):
+    base_url: str
+    api_key: str
+    model: str
 
 
 def _workspace_http_error(
@@ -78,6 +85,33 @@ def get_nodes():
 @app.get("/api/agent-templates")
 def get_agent_templates():
     return agent_templates.list_templates()
+
+
+@app.post("/api/test-provider")
+def test_provider(body: TestProviderRequest):
+    """Actually exercise a Provider node's config with one real request.
+
+    Building a provider (Provider.execute(), what running that node in a
+    graph does) never touches the network -- it just stores the config, so
+    a bad base_url/api_key/model would otherwise never surface until a real
+    Translate/ExtractGlossary run. This is the standalone "test connection"
+    button's backing endpoint: always 200, {ok, message} tells the caller
+    whether the request itself succeeded.
+    """
+    config = ProviderConfig(
+        type="openai_compatible",
+        base_url=body.base_url,
+        api_key=body.api_key,
+        model=body.model,
+    )
+    provider = create_provider(config)
+    try:
+        provider.complete([{"role": "user", "content": "ping"}], max_tokens=1)
+    except ProviderError as exc:
+        return {"ok": False, "message": str(exc)}
+    finally:
+        provider.close()
+    return {"ok": True}
 
 
 @app.get("/api/workspaces")

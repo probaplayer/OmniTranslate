@@ -146,6 +146,55 @@ def test_patch_workspace_with_invalid_old_name_returns_400_not_404():
     assert response.status_code == 400
 
 
+class _FakeProvider:
+    def __init__(self, should_fail=False, error_message="boom"):
+        self.should_fail = should_fail
+        self.error_message = error_message
+        self.closed = False
+
+    def complete(self, messages, **kwargs):
+        if self.should_fail:
+            from translation_core import ProviderError
+
+            raise ProviderError(self.error_message)
+        return "pong"
+
+    def close(self):
+        self.closed = True
+
+
+def test_test_provider_returns_ok_on_success(monkeypatch):
+    client = TestClient(app)
+    fake = _FakeProvider(should_fail=False)
+    monkeypatch.setattr(server_main, "create_provider", lambda config: fake)
+
+    response = client.post(
+        "/api/test-provider",
+        json={"base_url": "http://localhost:1234/v1", "api_key": "k", "model": "m"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"ok": True}
+    assert fake.closed
+
+
+def test_test_provider_returns_error_message_on_failure(monkeypatch):
+    client = TestClient(app)
+    fake = _FakeProvider(should_fail=True, error_message="Provider returned HTTP 401")
+    monkeypatch.setattr(server_main, "create_provider", lambda config: fake)
+
+    response = client.post(
+        "/api/test-provider",
+        json={"base_url": "http://localhost:1234/v1", "api_key": "wrong", "model": "m"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is False
+    assert "401" in body["message"]
+    assert fake.closed
+
+
 def test_create_workspace_with_invalid_name_returns_400():
     client = TestClient(app)
     response = client.post("/api/workspaces", json={"name": "My Novel"})

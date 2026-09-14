@@ -1,14 +1,6 @@
 let inspectorNodeMetadata = {};
 let inspectorSelectedNode = null;
 
-// Running a node always executes it inside an isolated subgraph of its own
-// ancestors (see runSingleNode) -- for a node whose inputs all come from
-// upstream nodes, that's just "run part of the graph", not a real
-// standalone test. Provider is the exception: filling in its own options
-// (base URL, API key, model) is enough to test the connection with nothing
-// upstream at all, so it's the only type worth a standalone run button.
-const STANDALONE_RUNNABLE_TYPES = new Set(["Provider"]);
-
 function initInspectorPanel(nodeMetadataList, canvas) {
   inspectorNodeMetadata = {};
   for (const meta of nodeMetadataList) {
@@ -140,11 +132,11 @@ function renderInspector() {
   const actions = document.createElement("div");
   actions.className = "inspector-actions";
 
-  if (STANDALONE_RUNNABLE_TYPES.has(node.constructor.nodeType)) {
-    const runButton = document.createElement("button");
-    runButton.textContent = t("runNode");
-    runButton.addEventListener("click", () => runSingleNode(node));
-    actions.appendChild(runButton);
+  if (node.constructor.nodeType === "Provider") {
+    const testButton = document.createElement("button");
+    testButton.textContent = t("testProviderConnection");
+    testButton.addEventListener("click", () => testProviderConnection(node));
+    actions.appendChild(testButton);
   }
 
   const deleteButton = document.createElement("button");
@@ -169,48 +161,29 @@ function appendInspectorLabel(panel, text) {
   panel.appendChild(label);
 }
 
-function runSingleNode(node) {
-  const activeGraph = getActiveGraph();
-  const activeWorkspaceName = getActiveWorkspaceName();
-  if (!activeGraph) return;
-  if (!activeWorkspaceName) {
-    setStatus(t("statusSaveBeforeRun"), "error");
-    return;
-  }
-
-  const payload = buildExecutionPayload(activeGraph);
-  const nodeId = String(node.id);
-
-  const ancestorIds = new Set([nodeId]);
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const link of payload.links) {
-      if (ancestorIds.has(link.to_node) && !ancestorIds.has(link.from_node)) {
-        ancestorIds.add(link.from_node);
-        changed = true;
-      }
+async function testProviderConnection(node) {
+  setStatus(t("statusTestingProvider"), "info");
+  try {
+    const response = await fetch("/api/test-provider", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        base_url: node.properties.base_url || "",
+        api_key: node.properties.api_key || "",
+        model: node.properties.model || "",
+      }),
+    });
+    if (!response.ok) {
+      setStatus(`${t("statusTestProviderError")}HTTP ${response.status}`, "error");
+      return;
     }
-  }
-
-  const isolatedNodes = payload.nodes.filter((n) => ancestorIds.has(n.id));
-  const isolatedLinks = payload.links.filter(
-    (link) => ancestorIds.has(link.from_node) && ancestorIds.has(link.to_node)
-  );
-
-  const ws = new WebSocket(
-    `ws://${location.host}/ws/run/${encodeURIComponent(activeWorkspaceName)}`
-  );
-  ws.onopen = () => {
-    ws.send(JSON.stringify({ graph: { nodes: isolatedNodes, links: isolatedLinks } }));
-  };
-  ws.onerror = () => setStatus(t("statusWsError"), "error");
-  ws.onmessage = (message) => {
-    const event = JSON.parse(message.data);
-    appendLogEntry(event);
-    if (event.event === "run_finished") {
-      setStatus(t("statusRunFinished"), "ok");
-      ws.close();
+    const data = await response.json();
+    if (data.ok) {
+      setStatus(t("statusTestProviderOk"), "ok");
+    } else {
+      setStatus(`${t("statusTestProviderError")}${data.message}`, "error");
     }
-  };
+  } catch (err) {
+    setStatus(`${t("statusTestProviderError")}${err}`, "error");
+  }
 }
