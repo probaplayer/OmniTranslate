@@ -190,7 +190,8 @@ const STR = {
 const NODE_TYPE_LABELS = {
   vi: {
     LoadTextFile: "ĐỌC FILE", SaveTextFile: "GHI FILE", TextPreview: "XEM TRƯỚC",
-    Note: "GHI CHÚ", Provider: "NGUỒN MODEL", LoadAgentFile: "ĐỌC AGENT",
+    Note: "GHI CHÚ", Provider: "NGUỒN MODEL", GeminiProvider: "GEMINI",
+    LoadAgentFile: "ĐỌC AGENT",
     SaveAgentFile: "GHI AGENT", Translate: "DỊCH",
     LoadGlossary: "ĐỌC GLOSSARY", SaveGlossary: "GHI GLOSSARY", LookupGlossary: "TRA GLOSSARY",
     RecordChapter: "GHI CHƯƠNG", ExtractGlossary: "TRÍCH GLOSSARY",
@@ -198,7 +199,8 @@ const NODE_TYPE_LABELS = {
   },
   en: {
     LoadTextFile: "LOAD FILE", SaveTextFile: "SAVE FILE", TextPreview: "PREVIEW",
-    Note: "NOTE", Provider: "MODEL SOURCE", LoadAgentFile: "LOAD AGENT",
+    Note: "NOTE", Provider: "MODEL SOURCE", GeminiProvider: "GEMINI",
+    LoadAgentFile: "LOAD AGENT",
     SaveAgentFile: "SAVE AGENT", Translate: "TRANSLATE",
     LoadGlossary: "LOAD GLOSSARY", SaveGlossary: "SAVE GLOSSARY", LookupGlossary: "LOOKUP GLOSSARY",
     RecordChapter: "RECORD CHAPTER", ExtractGlossary: "EXTRACT GLOSSARY",
@@ -210,7 +212,8 @@ const NODE_TYPE_DESCS = {
   vi: {
     LoadTextFile: "Đọc file text", SaveTextFile: "Ghi file text",
     TextPreview: "Xem trước nội dung", Note: "Ghi chú tự do",
-    Provider: "Kết nối API/LM Studio", LoadAgentFile: "Đọc file agent",
+    Provider: "Kết nối API/LM Studio", GeminiProvider: "Kết nối Gemini (chỉ cần API key)",
+    LoadAgentFile: "Đọc file agent",
     SaveAgentFile: "Ghi file agent", Translate: "Dịch văn bản",
     LoadGlossary: "Đọc glossary.json", SaveGlossary: "Ghi glossary.json",
     LookupGlossary: "Tìm thuật ngữ liên quan", RecordChapter: "Ghi nhận 1 chương đã dịch",
@@ -220,7 +223,8 @@ const NODE_TYPE_DESCS = {
   en: {
     LoadTextFile: "Read a text file", SaveTextFile: "Write a text file",
     TextPreview: "Preview text content", Note: "Freeform note",
-    Provider: "API or LM Studio connection", LoadAgentFile: "Read the agent file",
+    Provider: "API or LM Studio connection", GeminiProvider: "Gemini connection (just needs an API key)",
+    LoadAgentFile: "Read the agent file",
     SaveAgentFile: "Write the agent file", Translate: "Translate text",
     LoadGlossary: "Load glossary.json", SaveGlossary: "Save glossary.json",
     LookupGlossary: "Find relevant terms", RecordChapter: "Record a translated chapter",

@@ -1,6 +1,14 @@
 let inspectorNodeMetadata = {};
 let inspectorSelectedNode = null;
 
+// Both node types build a plain OpenAICompatibleProvider under the hood
+// (Provider.execute() never makes a network call, see testProviderConnection
+// below) -- GeminiProvider just fixes base_url to Google's OpenAI-compatible
+// endpoint instead of exposing it as a field, so it needs the exact same
+// standalone connection test.
+const PROVIDER_NODE_TYPES = new Set(["Provider", "GeminiProvider"]);
+const GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/";
+
 function initInspectorPanel(nodeMetadataList, canvas) {
   inspectorNodeMetadata = {};
   for (const meta of nodeMetadataList) {
@@ -132,7 +140,7 @@ function renderInspector() {
   const actions = document.createElement("div");
   actions.className = "inspector-actions";
 
-  if (node.constructor.nodeType === "Provider") {
+  if (PROVIDER_NODE_TYPES.has(node.constructor.nodeType)) {
     const testButton = document.createElement("button");
     testButton.textContent = t("testProviderConnection");
     testButton.addEventListener("click", () => testProviderConnection(node));
@@ -168,7 +176,10 @@ async function testProviderConnection(node) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        base_url: node.properties.base_url || "",
+        base_url:
+          node.constructor.nodeType === "GeminiProvider"
+            ? GEMINI_OPENAI_BASE_URL
+            : node.properties.base_url || "",
         api_key: node.properties.api_key || "",
         model: node.properties.model || "",
         timeout_seconds: node.properties.timeout_seconds || "",

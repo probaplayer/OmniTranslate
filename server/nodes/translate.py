@@ -77,6 +77,53 @@ class Provider(NodeBase):
         return (create_provider(config),)
 
 
+# Google publishes an OpenAI-compatible endpoint for Gemini (same
+# /chat/completions request/response shape LM Studio and OpenAI itself use),
+# so this needs no separate provider implementation -- it's the exact same
+# OpenAICompatibleProvider as Provider above, just with base_url fixed to
+# Gemini's endpoint so the user only has to supply an API key (and, if they
+# want something other than the default, a model name).
+_GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+_DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
+
+
+@register_node("GeminiProvider")
+class GeminiProvider(NodeBase):
+    CATEGORY = "Translation"
+    RETURN_TYPES = ("PROVIDER",)
+    RETURN_NAMES = ("provider",)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "api_key": ("STRING", {"default": ""}),
+            },
+            "optional": {
+                "model": ("STRING", {"default": _DEFAULT_GEMINI_MODEL}),
+                "timeout_seconds": (
+                    "STRING",
+                    {"default": str(int(_DEFAULT_PROVIDER_TIMEOUT_SECONDS))},
+                ),
+            },
+        }
+
+    def execute(
+        self,
+        api_key: str,
+        model: str = "",
+        timeout_seconds: str = "",
+    ) -> tuple:
+        config = ProviderConfig(
+            type="openai_compatible",
+            base_url=_GEMINI_OPENAI_BASE_URL,
+            api_key=api_key,
+            model=model or _DEFAULT_GEMINI_MODEL,
+            timeout=_parse_timeout_seconds(timeout_seconds),
+        )
+        return (create_provider(config),)
+
+
 @register_node("LoadAgentFile")
 class LoadAgentFile(NodeBase):
     CATEGORY = "Translation"

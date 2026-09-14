@@ -57,6 +57,42 @@ def test_provider_node_falls_back_to_default_timeout_on_garbage_input():
     assert provider._client.timeout.read == 600.0
 
 
+def test_gemini_provider_node_uses_the_gemini_openai_endpoint():
+    node = get_node_class("GeminiProvider")()
+
+    provider = node.execute(api_key="my-gemini-key")[0]
+
+    assert isinstance(provider, OpenAICompatibleProvider)
+    assert provider.base_url == "https://generativelanguage.googleapis.com/v1beta/openai"
+    assert provider.api_key == "my-gemini-key"
+
+
+def test_gemini_provider_node_defaults_model_and_timeout():
+    node = get_node_class("GeminiProvider")()
+
+    provider = node.execute(api_key="k")[0]
+
+    assert provider.model == "gemini-2.0-flash"
+    assert provider._client.timeout.read == 600.0
+
+
+def test_gemini_provider_node_honors_custom_model_and_timeout():
+    node = get_node_class("GeminiProvider")()
+
+    provider = node.execute(api_key="k", model="gemini-1.5-pro", timeout_seconds="120")[0]
+
+    assert provider.model == "gemini-1.5-pro"
+    assert provider._client.timeout.read == 120.0
+
+
+def test_gemini_provider_node_falls_back_to_default_timeout_on_garbage_input():
+    node = get_node_class("GeminiProvider")()
+
+    provider = node.execute(api_key="k", timeout_seconds="not-a-number")[0]
+
+    assert provider._client.timeout.read == 600.0
+
+
 def test_load_agent_file_node_reads_seeded_file():
     workspace.create_workspace("novel-a")
     node = get_node_class("LoadAgentFile")()

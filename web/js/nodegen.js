@@ -4,6 +4,7 @@ const NODE_TYPE_META = {
   TextPreview: { icon: "◐", color: "#8d949e" },
   Note: { icon: "✎", color: "#8d949e" },
   Provider: { icon: "✦", color: "#7fb98a" },
+  GeminiProvider: { icon: "✳", color: "#8ab4f8" },
   LoadAgentFile: { icon: "◈", color: "#d9a44c" },
   SaveAgentFile: { icon: "◆", color: "#d9a44c" },
   Translate: { icon: "⇄", color: "#7fb98a" },
