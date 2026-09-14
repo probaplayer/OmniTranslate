@@ -21,7 +21,7 @@ from server import workspace
 from server.node_registry import NodeBase, register_node
 
 
-_DEFAULT_PROVIDER_TIMEOUT_SECONDS = 300.0
+_DEFAULT_PROVIDER_TIMEOUT_SECONDS = 600.0
 
 
 def _parse_timeout_seconds(value: str) -> float:

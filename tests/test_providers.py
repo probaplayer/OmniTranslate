@@ -240,7 +240,7 @@ def test_default_constructed_client_uses_a_generous_timeout():
         base_url="http://localhost:1234/v1", api_key="dummy", model="m"
     )
 
-    assert provider._client.timeout.read == 300.0
+    assert provider._client.timeout.read == 600.0
 
 
 def test_custom_timeout_is_passed_to_the_default_client():
@@ -284,7 +284,7 @@ def test_create_provider_openai_compatible():
     assert isinstance(provider, OpenAICompatibleProvider)
     assert provider.base_url == "http://localhost:1234/v1"
     assert provider.model == "local-model"
-    assert provider._client.timeout.read == 300.0
+    assert provider._client.timeout.read == 600.0
 
 
 def test_create_provider_passes_through_a_custom_timeout():

@@ -218,7 +218,7 @@ def test_test_provider_falls_back_to_default_timeout_when_omitted(monkeypatch):
     )
 
     assert response.status_code == 200
-    assert captured["config"].timeout == 300.0
+    assert captured["config"].timeout == 600.0
 
 
 def test_test_provider_returns_error_message_on_failure(monkeypatch):

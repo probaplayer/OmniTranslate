@@ -34,7 +34,7 @@ def test_provider_node_defaults_to_a_generous_timeout():
 
     provider = node.execute(base_url="http://localhost:1234/v1", api_key="dummy", model="m")[0]
 
-    assert provider._client.timeout.read == 300.0
+    assert provider._client.timeout.read == 600.0
 
 
 def test_provider_node_honors_a_custom_timeout_seconds():
@@ -54,7 +54,7 @@ def test_provider_node_falls_back_to_default_timeout_on_garbage_input():
         base_url="http://localhost:1234/v1", api_key="dummy", model="m", timeout_seconds="not-a-number"
     )[0]
 
-    assert provider._client.timeout.read == 300.0
+    assert provider._client.timeout.read == 600.0
 
 
 def test_load_agent_file_node_reads_seeded_file():

@@ -17,7 +17,7 @@ class ProviderConfig:
     # codebase's old hardcoded value was 60s) -- both are far too short for
     # local LLM inference over a full chapter + glossary + agent prompt, so
     # default to a generous ceiling rather than a network-API-sized one.
-    timeout: float = 300.0
+    timeout: float = 600.0
 
 
 def create_provider(config: ProviderConfig) -> LLMProvider:

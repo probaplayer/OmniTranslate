@@ -13,7 +13,7 @@ class OpenAICompatibleProvider(LLMProvider):
         api_key: str,
         model: str,
         client: httpx.Client | None = None,
-        timeout: float = 300.0,
+        timeout: float = 600.0,
     ):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
