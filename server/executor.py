@@ -125,12 +125,15 @@ def run_graph(nodes, links, on_event=None, workspace_name=None) -> dict:
     skipped = set()
 
     for node_id in order:
+        node_type = node_by_id[node_id]["type"]
+
         if node_id in skipped:
             outputs[node_id] = ()
             emit(
                 {
                     "event": "node_error",
                     "node_id": node_id,
+                    "node_type": node_type,
                     "message": "skipped: upstream dependency failed",
                 }
             )
@@ -149,7 +152,7 @@ def run_graph(nodes, links, on_event=None, workspace_name=None) -> dict:
         if node_cls.NEEDS_WORKSPACE:
             kwargs["workspace_name"] = workspace_name
 
-        emit({"event": "node_started", "node_id": node_id})
+        emit({"event": "node_started", "node_id": node_id, "node_type": node_type})
         try:
             result = node_cls().execute(**kwargs)
             outputs[node_id] = result
@@ -157,12 +160,20 @@ def run_graph(nodes, links, on_event=None, workspace_name=None) -> dict:
                 {
                     "event": "node_completed",
                     "node_id": node_id,
+                    "node_type": node_type,
                     "outputs": _truncate_outputs_for_event(result),
                 }
             )
         except Exception as exc:
             outputs[node_id] = ()
-            emit({"event": "node_error", "node_id": node_id, "message": str(exc)})
+            emit(
+                {
+                    "event": "node_error",
+                    "node_id": node_id,
+                    "node_type": node_type,
+                    "message": str(exc),
+                }
+            )
             skipped.update(dependents[node_id])
 
     emit({"event": "run_finished"})

@@ -32,6 +32,20 @@ function renderLogEmptyState() {
   empty.textContent = t("logEmpty");
 }
 
+// event.node_type comes straight from the executor (always present for any
+// per-node event), so this works even if the node was since deleted from
+// the canvas. When the node still exists and the user renamed it, its
+// custom title is appended too -- that's the name the user actually
+// recognizes, vs. the bare node type.
+function describeLogSource(event) {
+  const graph = typeof getActiveGraph === "function" ? getActiveGraph() : null;
+  const node = graph ? graph.getNodeById(Number(event.node_id)) : null;
+  const typeName = event.node_type || (node && node.constructor.nodeType) || "?";
+  const customTitle =
+    node && node.title && node.title !== node.constructor.nodeType ? ` "${node.title}"` : "";
+  return `#${event.node_id} ${typeName}${customTitle}`;
+}
+
 function appendLogEntry(event) {
   const body = document.getElementById("log-console-body");
   if (!body) return;
@@ -51,13 +65,22 @@ function appendLogEntry(event) {
   timeEl.className = "log-time";
   timeEl.textContent = time;
 
+  const isSkippedEntry =
+    event.event === "node_error" && event.message === "skipped: upstream dependency failed";
+
   const sourceEl = document.createElement("span");
-  sourceEl.textContent = event.node_id ? `node ${event.node_id}` : "run";
+  sourceEl.textContent = event.node_id ? describeLogSource(event) : "run";
 
   const messageEl = document.createElement("span");
   messageEl.textContent = event.message || event.event;
-  const color = LOG_MESSAGE_COLOR[event.event];
+  const color = isSkippedEntry ? "var(--text-faint)" : LOG_MESSAGE_COLOR[event.event];
   if (color) messageEl.style.color = color;
+
+  if (isSkippedEntry) {
+    row.classList.add("log-entry-skipped");
+  } else if (event.event === "node_error") {
+    row.classList.add("log-entry-root-error");
+  }
 
   row.appendChild(timeEl);
   row.appendChild(sourceEl);

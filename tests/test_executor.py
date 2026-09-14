@@ -92,6 +92,31 @@ def test_run_graph_error_skips_downstream_but_not_independent_branch():
     assert any(e["event"] == "run_finished" for e in events)
 
 
+def test_events_include_node_type_for_started_completed_error_and_skipped():
+    """The frontend log only ever had the numeric node_id to show the user --
+    with several failing nodes in a run, there was no way to tell which one
+    was the actual culprit vs. a node merely skipped because an ancestor
+    failed. Every per-node event now carries node_type so the log can show
+    e.g. "Provider" instead of just "node 6"."""
+    nodes = [
+        {"id": "1", "type": "_TestFail", "inputs": {"value": "a"}},
+        {"id": "2", "type": "_TestAdd", "inputs": {"value": "unused"}},
+    ]
+    links = [{"from_node": "1", "from_output": "out", "to_node": "2", "to_input": "value"}]
+
+    events = []
+    run_graph(nodes, links, on_event=events.append)
+
+    started = next(e for e in events if e["event"] == "node_started")
+    assert started["node_type"] == "_TestFail"
+
+    failed = next(e for e in events if e["event"] == "node_error" and e["node_id"] == "1")
+    assert failed["node_type"] == "_TestFail"
+
+    skipped = next(e for e in events if e["event"] == "node_error" and e["node_id"] == "2")
+    assert skipped["node_type"] == "_TestAdd"
+
+
 def test_run_graph_writes_file_via_real_utility_nodes(tmp_path):
     src = tmp_path / "in.txt"
     src.write_text("raw chapter", encoding="utf-8")

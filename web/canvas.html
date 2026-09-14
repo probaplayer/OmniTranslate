@@ -474,13 +474,22 @@
     }
     .log-entry {
       display: grid;
-      grid-template-columns: 62px 100px 1fr;
+      grid-template-columns: 62px 190px 1fr;
       gap: 10px;
       padding: 3px 12px;
       font-family: var(--font-mono);
       font-size: 11.5px;
       line-height: 1.6;
+      border-left: 2px solid transparent;
     }
+    .log-entry > span:nth-child(2) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .log-entry.log-entry-skipped { opacity: 0.55; }
+    .log-entry.log-entry-skipped span:last-child { font-style: italic; }
+    .log-entry.log-entry-root-error { border-left-color: var(--danger); background: rgba(217, 112, 112, 0.08); }
     .log-time { color: var(--text-faint); }
     .log-count-badge {
       font-family: var(--font-mono);
