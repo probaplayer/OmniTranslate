@@ -3,7 +3,9 @@
 Ghi lại trạng thái thật của 3 sub-project bắt nguồn từ buổi brainstorm ngày
 2026-09-10 (thay thế RAG bằng Chroma bằng glossary.json + chapters.json,
 thêm popup chọn đường dẫn, thêm thư viện agent mẫu theo thể loại). Cập nhật
-lần cuối: 2026-09-11.
+lần cuối: 2026-09-14.
+
+**Cả 3 sub-project đã xong và đã merge vào `master` (đã push lên GitHub).**
 
 ## ✅ Đã xong — đã merge vào `master`
 
@@ -32,33 +34,25 @@ lần cuối: 2026-09-11.
 
 **Trạng thái test trên `master` hiện tại: xanh (tất cả pass).**
 
-## 🚧 Đang làm — CHƯA merge
-
 ### 3. Agent Template Library
 - Spec: `docs/superpowers/specs/2026-09-10-agent-template-library-design.md`
 - Plan: `docs/superpowers/plans/2026-09-10-agent-template-library-plan.md`
-- Worktree: `.worktrees/agent-template-library` (branch
-  `feature/agent-template-library`, HEAD `f456a90`)
-- **Cả 6 task trong kế hoạch đã code xong, review từng task đều sạch**:
-  1. 14 file nội dung agent mẫu (`agents/vn|en/*.md`, 7 thể loại × 2 ngôn ngữ)
-  2. `server/agent_templates.py` (list + resolve an toàn, đã bị "tấn công"
-     20 kiểu path-traversal khác nhau lúc review, không lọt cái nào)
-  3. `GET /api/agent-templates`
-  4. `LoadAgentFile` thêm field `template` (mặc định `"workspace"`, hành vi
-     cũ giữ nguyên 100%; `SaveAgentFile` không đổi gì)
-  5. Modal "Chọn agent..." — sống chung an toàn với nút "Duyệt..." của
-     Path Picker trong cùng 1 vòng lặp render (đã verify không đụng nhau)
-  6. Walkthrough end-to-end thủ công — PASS
-- **Việc còn thiếu duy nhất: final whole-branch review (review toàn bộ
-  nhánh, bước cuối cùng trước khi merge) đã bị gọi 1 lần nhưng bị ngắt giữa
-  chừng do rate-limit của phiên làm việc — CHƯA có kết luận APPROVE hay
-  CHANGES REQUESTED.** Ledger đã ghi rõ lần gọi đó là vô hiệu, cần gọi lại
-  từ đầu.
+- 6 task kế hoạch + 1 fix wave (ad-hoc) sau final review — tất cả đã review
+  sạch. Final whole-branch review bị ngắt do rate-limit 2 lần trước khi gọi
+  thành công lần 3 (rất kỹ: brute-force toàn bộ 1,114,112 Unicode codepoint
+  vào regex validate slug để xác nhận không có cách nào path-traversal
+  thoát ra ngoài `agents/`; chạy thật `litegraph.js` trong Node để chứng
+  minh graph cũ (chưa có field `template`) khi load lại vẫn gửi đúng
+  `template: "workspace"`, không bao giờ rơi vào trường hợp chuỗi rỗng).
+- Merge thường (không squash) vào master.
+- Có: `agents/vn|en/*.md` (7 thể loại × 2 ngôn ngữ), `server/agent_templates.py`,
+  `GET /api/agent-templates`, `LoadAgentFile` thêm field `template` (mặc định
+  `"workspace"`, hành vi cũ giữ nguyên 100%; `SaveAgentFile` không đổi gì),
+  modal "Chọn agent..." sống chung an toàn với nút "Duyệt..." của Path Picker
+  trong cùng 1 vòng lặp render (đã merge, xác nhận auto-merge sạch, không
+  conflict).
 
-**Việc tiếp theo khi làm lại: dispatch lại final whole-branch review cho
-branch `feature/agent-template-library` (so với base `156bb63`), xử lý
-finding nếu có, rồi merge (dự kiến merge thường, không cần squash trừ khi
-review phát hiện vấn đề tương tự Task 8 ở plan Glossary).**
+**Trạng thái test trên `master` hiện tại: xanh (168/168 pass).**
 
 ## Ghi chú khác (không khẩn, không chặn merge)
 
