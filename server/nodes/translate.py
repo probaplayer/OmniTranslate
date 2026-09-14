@@ -21,6 +21,23 @@ from server import workspace
 from server.node_registry import NodeBase, register_node
 
 
+_DEFAULT_PROVIDER_TIMEOUT_SECONDS = 300.0
+
+
+def _parse_timeout_seconds(value: str) -> float:
+    """Parse the Provider node's timeout_seconds field.
+
+    That field is a plain STRING input like every other node input (the
+    node system has no numeric widget), typed and editable by hand -- an
+    empty or malformed value falls back to the default rather than
+    rejecting the whole run over a typo.
+    """
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return _DEFAULT_PROVIDER_TIMEOUT_SECONDS
+
+
 @register_node("Provider")
 class Provider(NodeBase):
     CATEGORY = "Translation"
@@ -34,12 +51,28 @@ class Provider(NodeBase):
                 "base_url": ("STRING", {"default": ""}),
                 "api_key": ("STRING", {"default": ""}),
                 "model": ("STRING", {"default": ""}),
-            }
+            },
+            "optional": {
+                "timeout_seconds": (
+                    "STRING",
+                    {"default": str(int(_DEFAULT_PROVIDER_TIMEOUT_SECONDS))},
+                ),
+            },
         }
 
-    def execute(self, base_url: str, api_key: str, model: str) -> tuple:
+    def execute(
+        self,
+        base_url: str,
+        api_key: str,
+        model: str,
+        timeout_seconds: str = "",
+    ) -> tuple:
         config = ProviderConfig(
-            type="openai_compatible", base_url=base_url, api_key=api_key, model=model
+            type="openai_compatible",
+            base_url=base_url,
+            api_key=api_key,
+            model=model,
+            timeout=_parse_timeout_seconds(timeout_seconds),
         )
         return (create_provider(config),)
 

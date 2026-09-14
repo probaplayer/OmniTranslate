@@ -47,6 +47,7 @@ class TestProviderRequest(BaseModel):
     base_url: str
     api_key: str
     model: str
+    timeout_seconds: str = ""
 
 
 def _workspace_http_error(
@@ -103,6 +104,7 @@ def test_provider(body: TestProviderRequest):
         base_url=body.base_url,
         api_key=body.api_key,
         model=body.model,
+        timeout=translate_nodes._parse_timeout_seconds(body.timeout_seconds),
     )
     provider = create_provider(config)
     try:

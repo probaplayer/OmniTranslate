@@ -178,6 +178,49 @@ def test_test_provider_returns_ok_on_success(monkeypatch):
     assert fake.closed
 
 
+def test_test_provider_passes_custom_timeout_through_to_provider_config(monkeypatch):
+    client = TestClient(app)
+    captured = {}
+
+    def fake_create_provider(config):
+        captured["config"] = config
+        return _FakeProvider(should_fail=False)
+
+    monkeypatch.setattr(server_main, "create_provider", fake_create_provider)
+
+    response = client.post(
+        "/api/test-provider",
+        json={
+            "base_url": "http://localhost:1234/v1",
+            "api_key": "k",
+            "model": "m",
+            "timeout_seconds": "900",
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["config"].timeout == 900.0
+
+
+def test_test_provider_falls_back_to_default_timeout_when_omitted(monkeypatch):
+    client = TestClient(app)
+    captured = {}
+
+    def fake_create_provider(config):
+        captured["config"] = config
+        return _FakeProvider(should_fail=False)
+
+    monkeypatch.setattr(server_main, "create_provider", fake_create_provider)
+
+    response = client.post(
+        "/api/test-provider",
+        json={"base_url": "http://localhost:1234/v1", "api_key": "k", "model": "m"},
+    )
+
+    assert response.status_code == 200
+    assert captured["config"].timeout == 300.0
+
+
 def test_test_provider_returns_error_message_on_failure(monkeypatch):
     client = TestClient(app)
     fake = _FakeProvider(should_fail=True, error_message="Provider returned HTTP 401")

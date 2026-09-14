@@ -232,6 +232,34 @@ def test_default_constructed_client_can_be_closed():
     assert provider._client.is_closed
 
 
+def test_default_constructed_client_uses_a_generous_timeout():
+    """A local model translating a full chapter can take much longer than a
+    typical network-API timeout -- this must not regress back to a short
+    default that times out real (not just test) traffic."""
+    provider = OpenAICompatibleProvider(
+        base_url="http://localhost:1234/v1", api_key="dummy", model="m"
+    )
+
+    assert provider._client.timeout.read == 300.0
+
+
+def test_custom_timeout_is_passed_to_the_default_client():
+    provider = OpenAICompatibleProvider(
+        base_url="http://localhost:1234/v1", api_key="dummy", model="m", timeout=5.0
+    )
+
+    assert provider._client.timeout.read == 5.0
+
+
+def test_explicit_client_timeout_is_not_overridden():
+    client = _client_with_handler(lambda request: httpx.Response(200, json={}))
+    provider = OpenAICompatibleProvider(
+        base_url="http://localhost:1234/v1", api_key="dummy", model="m", client=client, timeout=5.0
+    )
+
+    assert provider._client is client
+
+
 from translation_core.providers.factory import ProviderConfig, create_provider
 
 
@@ -256,6 +284,21 @@ def test_create_provider_openai_compatible():
     assert isinstance(provider, OpenAICompatibleProvider)
     assert provider.base_url == "http://localhost:1234/v1"
     assert provider.model == "local-model"
+    assert provider._client.timeout.read == 300.0
+
+
+def test_create_provider_passes_through_a_custom_timeout():
+    config = ProviderConfig(
+        type="openai_compatible",
+        base_url="http://localhost:1234/v1",
+        api_key="dummy",
+        model="local-model",
+        timeout=900.0,
+    )
+
+    provider = create_provider(config)
+
+    assert provider._client.timeout.read == 900.0
 
 
 def test_create_provider_unknown_type_raises():

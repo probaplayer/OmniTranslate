@@ -13,11 +13,15 @@ class OpenAICompatibleProvider(LLMProvider):
         api_key: str,
         model: str,
         client: httpx.Client | None = None,
+        timeout: float = 300.0,
     ):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
-        self._client = client or httpx.Client(timeout=60.0)
+        # `timeout` only applies when this constructs its own client -- a
+        # caller passing an explicit `client` (e.g. tests, with a
+        # MockTransport) owns that client's timeout already.
+        self._client = client or httpx.Client(timeout=timeout)
 
     def close(self) -> None:
         """Close the underlying HTTP client.

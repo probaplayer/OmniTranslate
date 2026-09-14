@@ -171,6 +171,7 @@ async function testProviderConnection(node) {
         base_url: node.properties.base_url || "",
         api_key: node.properties.api_key || "",
         model: node.properties.model || "",
+        timeout_seconds: node.properties.timeout_seconds || "",
       }),
     });
     if (!response.ok) {
