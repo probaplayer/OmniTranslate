@@ -446,6 +446,111 @@
     }
     .settings-panel-actions button:hover { border-color: var(--accent); color: var(--accent); }
 
+    .output-manager-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .output-manager-modal {
+      width: 480px;
+      max-height: 78vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .output-manager-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .output-manager-list {
+      flex: 1;
+      min-height: 60px;
+      max-height: 260px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    .output-manager-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .output-manager-item:last-child { border-bottom: none; }
+    .output-manager-item:hover { background: var(--bg-hover); }
+    .output-manager-item-name {
+      flex: 1;
+      min-width: 0;
+      font-size: 12.5px;
+      color: var(--text);
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .output-manager-item-name:hover { color: var(--accent); }
+    .output-manager-item-meta {
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-faint);
+    }
+    .output-manager-item-delete {
+      flex-shrink: 0;
+      background: transparent;
+      border: none;
+      color: var(--text-faint);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 2px 4px;
+    }
+    .output-manager-item-delete:hover { color: var(--danger); }
+    .output-manager-empty {
+      padding: 14px 10px;
+      font-size: 12px;
+      color: var(--text-faint);
+    }
+    .output-manager-preview {
+      max-height: 220px;
+      overflow: auto;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      line-height: 1.5;
+      padding: 10px;
+      margin: 0 0 10px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .output-manager-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .output-manager-actions button {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 12px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .output-manager-actions button:hover { border-color: var(--accent); color: var(--accent); }
+
     #canvas-area { position: relative; flex: 1; min-height: 0; }
     #graph-canvas { display: block; width: 100%; height: 100%; }
 
@@ -645,6 +750,7 @@
   <script src="/js/inspector_panel.js"></script>
   <script src="/js/minimap.js"></script>
   <script src="/js/log_console.js"></script>
+  <script src="/js/output_manager.js"></script>
   <script src="/js/workspace_tabs.js"></script>
   <script src="/js/canvas_app.js"></script>
 </body>

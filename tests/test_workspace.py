@@ -306,3 +306,100 @@ def test_rename_workspace_rejects_invalid_new_name():
 
     with pytest.raises(workspace.InvalidWorkspaceNameError):
         workspace.rename_workspace("novel-a", "bad name")
+
+
+def test_list_output_files_empty_for_new_workspace():
+    workspace.create_workspace("novel-a")
+
+    assert workspace.list_output_files("novel-a") == []
+
+
+def test_list_output_files_missing_workspace_raises():
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.list_output_files("does-not-exist")
+
+
+def test_list_output_files_lists_nested_files_with_size_and_mtime():
+    workspace.create_workspace("novel-a")
+    output_dir = workspace.get_workspace_path("novel-a", "output")
+    (output_dir / "ch1.txt").write_text("hello", encoding="utf-8")
+    nested = output_dir / "sub"
+    nested.mkdir()
+    (nested / "ch2.txt").write_text("world!", encoding="utf-8")
+
+    files = workspace.list_output_files("novel-a")
+
+    assert [f["path"] for f in files] == ["ch1.txt", "sub/ch2.txt"]
+    ch1 = next(f for f in files if f["path"] == "ch1.txt")
+    assert ch1["size"] == 5
+    assert isinstance(ch1["modified"], float)
+
+
+def test_read_output_file_returns_content():
+    workspace.create_workspace("novel-a")
+    output_dir = workspace.get_workspace_path("novel-a", "output")
+    (output_dir / "ch1.txt").write_text("nội dung", encoding="utf-8")
+
+    assert workspace.read_output_file("novel-a", "ch1.txt") == "nội dung"
+
+
+def test_read_output_file_missing_raises():
+    workspace.create_workspace("novel-a")
+
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.read_output_file("novel-a", "does-not-exist.txt")
+
+
+def test_read_output_file_rejects_path_escaping_output_dir():
+    workspace.create_workspace("novel-a")
+    # A sibling file inside the workspace but outside output/ -- must not be
+    # readable through the output-file endpoint.
+    workspace.get_workspace_path("novel-a", "agent.md").write_text("secret", encoding="utf-8")
+
+    with pytest.raises(workspace.InvalidOutputPathError):
+        workspace.read_output_file("novel-a", "../agent.md")
+
+
+def test_read_output_file_rejects_absolute_path_escape(tmp_path):
+    workspace.create_workspace("novel-a")
+    outside = tmp_path / "outside.txt"
+    outside.write_text("nope", encoding="utf-8")
+
+    with pytest.raises(workspace.InvalidOutputPathError):
+        workspace.read_output_file("novel-a", str(outside))
+
+
+def test_read_output_file_rejects_non_utf8_content():
+    workspace.create_workspace("novel-a")
+    output_dir = workspace.get_workspace_path("novel-a", "output")
+    (output_dir / "binary.bin").write_bytes(b"\xff\xfe\x00\x01")
+
+    with pytest.raises(workspace.NotTextFileError):
+        workspace.read_output_file("novel-a", "binary.bin")
+
+
+def test_delete_output_file_removes_it():
+    workspace.create_workspace("novel-a")
+    output_dir = workspace.get_workspace_path("novel-a", "output")
+    (output_dir / "ch1.txt").write_text("hello", encoding="utf-8")
+
+    workspace.delete_output_file("novel-a", "ch1.txt")
+
+    assert workspace.list_output_files("novel-a") == []
+
+
+def test_delete_output_file_missing_raises():
+    workspace.create_workspace("novel-a")
+
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.delete_output_file("novel-a", "does-not-exist.txt")
+
+
+def test_delete_output_file_rejects_path_escaping_output_dir():
+    workspace.create_workspace("novel-a")
+    agent_path = workspace.get_workspace_path("novel-a", "agent.md")
+
+    with pytest.raises(workspace.InvalidOutputPathError):
+        workspace.delete_output_file("novel-a", "../agent.md")
+
+    assert agent_path.exists()

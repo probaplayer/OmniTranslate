@@ -146,6 +146,96 @@ def test_patch_workspace_with_invalid_old_name_returns_400_not_404():
     assert response.status_code == 400
 
 
+def test_list_output_files_via_api():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+    output_dir = workspace.get_workspace_path("novel-a", "output")
+    (output_dir / "ch1.txt").write_text("hello", encoding="utf-8")
+
+    response = client.get("/api/workspaces/novel-a/output")
+
+    assert response.status_code == 200
+    files = response.json()["files"]
+    assert len(files) == 1
+    assert files[0]["path"] == "ch1.txt"
+    assert files[0]["size"] == 5
+    assert isinstance(files[0]["modified"], float)
+
+
+def test_list_output_files_missing_workspace_returns_404():
+    client = TestClient(app)
+    response = client.get("/api/workspaces/does-not-exist/output")
+    assert response.status_code == 404
+
+
+def test_get_output_file_returns_content():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+    output_dir = workspace.get_workspace_path("novel-a", "output")
+    (output_dir / "ch1.txt").write_text("nội dung", encoding="utf-8")
+
+    response = client.get("/api/workspaces/novel-a/output/ch1.txt")
+
+    assert response.status_code == 200
+    assert response.json() == {"content": "nội dung"}
+
+
+def test_get_output_file_nested_path():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+    output_dir = workspace.get_workspace_path("novel-a", "output")
+    (output_dir / "sub").mkdir()
+    (output_dir / "sub" / "ch2.txt").write_text("chương 2", encoding="utf-8")
+
+    response = client.get("/api/workspaces/novel-a/output/sub/ch2.txt")
+
+    assert response.status_code == 200
+    assert response.json() == {"content": "chương 2"}
+
+
+def test_get_output_file_missing_returns_404():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+
+    response = client.get("/api/workspaces/novel-a/output/does-not-exist.txt")
+
+    assert response.status_code == 404
+
+
+def test_get_output_file_path_escape_returns_400():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+
+    # A literal "../" in the URL gets normalized away by the HTTP layer
+    # before the request is even sent (so it never proves the endpoint's own
+    # guard does anything) -- %2e%2e survives normalization and reaches the
+    # handler with the traversal attempt intact.
+    response = client.get("/api/workspaces/novel-a/output/%2e%2e/agent.md")
+
+    assert response.status_code == 400
+
+
+def test_delete_output_file_via_api():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+    output_dir = workspace.get_workspace_path("novel-a", "output")
+    (output_dir / "ch1.txt").write_text("hello", encoding="utf-8")
+
+    response = client.delete("/api/workspaces/novel-a/output/ch1.txt")
+
+    assert response.status_code == 200
+    assert client.get("/api/workspaces/novel-a/output").json() == {"files": []}
+
+
+def test_delete_output_file_missing_returns_404():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+
+    response = client.delete("/api/workspaces/novel-a/output/does-not-exist.txt")
+
+    assert response.status_code == 404
+
+
 class _FakeProvider:
     def __init__(self, should_fail=False, error_message="boom"):
         self.should_fail = should_fail

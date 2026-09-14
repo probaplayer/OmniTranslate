@@ -168,6 +168,15 @@ function showTabContextMenu(event, tab) {
   });
   menu.appendChild(renameItem);
 
+  const outputItem = document.createElement("div");
+  outputItem.className = "tab-context-menu-item";
+  outputItem.textContent = t("outputManagerButton");
+  outputItem.addEventListener("click", () => {
+    closeTabContextMenu();
+    openOutputManager(tab.workspaceName);
+  });
+  menu.appendChild(outputItem);
+
   const deleteItem = document.createElement("div");
   deleteItem.className = "tab-context-menu-item danger";
   deleteItem.textContent = t("deleteWorkspaceButton");

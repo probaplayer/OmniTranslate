@@ -33,6 +33,14 @@ class InvalidGraphError(WorkspaceError):
     """The graph handed in for saving is not a well-shaped graph object."""
 
 
+class InvalidOutputPathError(WorkspaceError):
+    """The given output-file path is not a path inside that workspace's output dir."""
+
+
+class NotTextFileError(WorkspaceError):
+    """The output file exists but isn't decodable as UTF-8 text."""
+
+
 def _is_valid_workspace_name(name: str) -> bool:
     """Check a workspace name against a strict allowlist pattern.
 
@@ -176,3 +184,66 @@ def rename_workspace(old_name: str, new_name: str) -> None:
         )
     except (OSError, json.JSONDecodeError):
         pass
+
+
+def list_output_files(name: str) -> list:
+    """List every file under this workspace's output/ dir, recursively.
+
+    Returns dicts with a `/`-joined relative path (stable across OSes, and
+    exactly the path a client echoes back to read/delete that file), size in
+    bytes, and last-modified time as a Unix timestamp. A workspace's output/
+    dir always exists (created by create_workspace) unless something removed
+    it by hand -- treated the same as "no files yet" rather than an error.
+    """
+    output_dir = get_workspace_path(name, "output")
+    if not get_workspace_path(name).exists():
+        raise WorkspaceError(f"Workspace '{name}' does not exist")
+    if not output_dir.exists():
+        return []
+    files = []
+    for path in output_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        stat = path.stat()
+        files.append(
+            {
+                "path": "/".join(path.relative_to(output_dir).parts),
+                "size": stat.st_size,
+                "modified": stat.st_mtime,
+            }
+        )
+    return sorted(files, key=lambda f: f["path"])
+
+
+def _resolve_output_file_path(name: str, relative_path: str) -> Path:
+    """Resolve a client-given relative path to a real path inside output/.
+
+    Rejects anything that would escape output/ (absolute paths, `..`
+    segments, symlink shenanigans) by resolving both paths and checking
+    containment -- the same class of bug workspace names are guarded
+    against, just for a path with multiple segments instead of one name.
+    """
+    output_dir = get_workspace_path(name, "output")
+    if not get_workspace_path(name).exists():
+        raise WorkspaceError(f"Workspace '{name}' does not exist")
+    candidate = (output_dir / relative_path).resolve()
+    if not candidate.is_relative_to(output_dir.resolve()):
+        raise InvalidOutputPathError(f"Invalid output file path: '{relative_path}'")
+    return candidate
+
+
+def read_output_file(name: str, relative_path: str) -> str:
+    path = _resolve_output_file_path(name, relative_path)
+    if not path.is_file():
+        raise WorkspaceError(f"Output file '{relative_path}' does not exist")
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        raise NotTextFileError(f"Output file '{relative_path}' is not a text file")
+
+
+def delete_output_file(name: str, relative_path: str) -> None:
+    path = _resolve_output_file_path(name, relative_path)
+    if not path.is_file():
+        raise WorkspaceError(f"Output file '{relative_path}' does not exist")
+    path.unlink()

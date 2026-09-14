@@ -63,10 +63,15 @@ def _workspace_http_error(
     does-not-exist -- so callers pass that in as `base_status`.
     """
     if isinstance(
-        exc, (workspace.InvalidWorkspaceNameError, workspace.InvalidGraphError)
+        exc,
+        (
+            workspace.InvalidWorkspaceNameError,
+            workspace.InvalidGraphError,
+            workspace.InvalidOutputPathError,
+        ),
     ):
         status = 400
-    elif isinstance(exc, workspace.CorruptWorkspaceError):
+    elif isinstance(exc, (workspace.CorruptWorkspaceError, workspace.NotTextFileError)):
         status = 422
     else:
         status = base_status
@@ -211,6 +216,32 @@ def patch_workspace(name: str, body: RenameWorkspaceRequest):
 def delete_workspace(name: str):
     try:
         workspace.delete_workspace(name)
+    except workspace.WorkspaceError as exc:
+        raise _workspace_http_error(exc, 404)
+    return {"status": "ok"}
+
+
+@app.get("/api/workspaces/{name}/output")
+def get_output_files(name: str):
+    try:
+        return {"files": workspace.list_output_files(name)}
+    except workspace.WorkspaceError as exc:
+        raise _workspace_http_error(exc, 404)
+
+
+@app.get("/api/workspaces/{name}/output/{path:path}")
+def get_output_file(name: str, path: str):
+    try:
+        content = workspace.read_output_file(name, path)
+    except workspace.WorkspaceError as exc:
+        raise _workspace_http_error(exc, 404)
+    return {"content": content}
+
+
+@app.delete("/api/workspaces/{name}/output/{path:path}")
+def delete_output_file(name: str, path: str):
+    try:
+        workspace.delete_output_file(name, path)
     except workspace.WorkspaceError as exc:
         raise _workspace_http_error(exc, 404)
     return {"status": "ok"}
