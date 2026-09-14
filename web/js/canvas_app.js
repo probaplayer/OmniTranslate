@@ -54,6 +54,7 @@ async function init() {
   initLogConsole();
   initMinimap(canvas, canvasEl);
   initBatchPanel();
+  initSettingsPanel(canvas);
 
   await initWorkspaceTabs();
 }
@@ -112,6 +113,8 @@ document.addEventListener("keydown", (event) => {
 
 function switchLang(lang) {
   setLang(lang);
+  document.getElementById("lang-vi-button").classList.toggle("active", lang === "vi");
+  document.getElementById("lang-en-button").classList.toggle("active", lang === "en");
   renderTabBar();
   renderInspector();
   if (nodeMetadataList) initNodePalette(nodeMetadataList, canvas, canvasEl);
@@ -120,6 +123,8 @@ function switchLang(lang) {
   if (activeGraph) activeGraph.setDirtyCanvas(true, true);
 }
 
+document.getElementById("lang-vi-button").classList.toggle("active", currentLang() === "vi");
+document.getElementById("lang-en-button").classList.toggle("active", currentLang() === "en");
 document.getElementById("lang-vi-button").addEventListener("click", () => switchLang("vi"));
 document.getElementById("lang-en-button").addEventListener("click", () => switchLang("en"));
 

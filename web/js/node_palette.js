@@ -89,6 +89,11 @@ function initNodePalette(nodeMetadataList, canvas, canvasEl) {
       const canvasPos = [event.clientX - rect.left, event.clientY - rect.top];
       node.pos = canvas.convertCanvasToOffset(canvasPos);
 
+      if (node.constructor.nodeType === "SaveTextFile" && !node.properties.path) {
+        const defaultPath = defaultOutputPathFor(getActiveWorkspaceName());
+        if (defaultPath) node.properties.path = defaultPath;
+      }
+
       activeGraph.add(node);
       markActiveDirty();
       activeGraph.setDirtyCanvas(true, true);

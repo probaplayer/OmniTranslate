@@ -21,10 +21,50 @@
   --font-mono: "IBM Plex Mono", "Consolas", monospace;
 }
 
+:root[data-theme="light"] {
+  --bg: #f4f3f0;
+  --bg-elevated: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-input: #eeece7;
+  --bg-hover: #e6e4de;
+  --border: #d8d5cd;
+  --border-soft: #e2dfd7;
+  --text: #232320;
+  --text-muted: #55534c;
+  --text-dim: #726f66;
+  --text-faint: #8a877d;
+  --accent: #b5792e;
+  --accent-hover: #96611f;
+  --accent-text: #fff8ee;
+  --danger: #b33f3f;
+  --success: #3f8a4d;
+  --status-idle: #9a978d;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-ui);
+}
+
+/* Scrollbars follow the current theme's palette (Firefox + WebKit/Chromium) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--bg-elevated);
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-elevated);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
 
 /* Workspace picker */
@@ -36,12 +76,12 @@ body {
 }
 
 .picker h1 {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   margin-bottom: 4px;
 }
 
 .picker h2 {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   color: var(--text-muted);
   margin-top: 32px;
 }
@@ -124,7 +164,7 @@ button {
 
 .hint {
   color: var(--text-muted);
-  font-size: 0.85em;
+  font-size: 0.92em;
   margin-top: 8px;
 }
 

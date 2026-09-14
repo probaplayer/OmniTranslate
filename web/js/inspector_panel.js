@@ -1,6 +1,14 @@
 let inspectorNodeMetadata = {};
 let inspectorSelectedNode = null;
 
+// Running a node always executes it inside an isolated subgraph of its own
+// ancestors (see runSingleNode) -- for a node whose inputs all come from
+// upstream nodes, that's just "run part of the graph", not a real
+// standalone test. Provider is the exception: filling in its own options
+// (base URL, API key, model) is enough to test the connection with nothing
+// upstream at all, so it's the only type worth a standalone run button.
+const STANDALONE_RUNNABLE_TYPES = new Set(["Provider"]);
+
 function initInspectorPanel(nodeMetadataList, canvas) {
   inspectorNodeMetadata = {};
   for (const meta of nodeMetadataList) {
@@ -119,7 +127,7 @@ function renderInspector() {
       chooseButton.className = "inspector-browse-button";
       chooseButton.textContent = t("agentTemplateButton");
       chooseButton.addEventListener("click", () => {
-        openAgentTemplatePicker((chosen) => {
+        openAgentTemplatePicker(field.value, (chosen) => {
           field.value = chosen;
           node.properties[name] = chosen;
           markActiveDirty();
@@ -132,10 +140,12 @@ function renderInspector() {
   const actions = document.createElement("div");
   actions.className = "inspector-actions";
 
-  const runButton = document.createElement("button");
-  runButton.textContent = t("runNode");
-  runButton.addEventListener("click", () => runSingleNode(node));
-  actions.appendChild(runButton);
+  if (STANDALONE_RUNNABLE_TYPES.has(node.constructor.nodeType)) {
+    const runButton = document.createElement("button");
+    runButton.textContent = t("runNode");
+    runButton.addEventListener("click", () => runSingleNode(node));
+    actions.appendChild(runButton);
+  }
 
   const deleteButton = document.createElement("button");
   deleteButton.className = "inspector-delete";

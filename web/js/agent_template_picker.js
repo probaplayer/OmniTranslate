@@ -1,6 +1,6 @@
 let agentTemplatePickerState = null;
 
-function openAgentTemplatePicker(onSelect) {
+function openAgentTemplatePicker(currentValue, onSelect) {
   closeAgentTemplatePicker();
 
   const overlay = document.createElement("div");
@@ -11,7 +11,8 @@ function openAgentTemplatePicker(onSelect) {
   modal.className = "agent-template-picker-modal";
 
   const workspaceOption = document.createElement("div");
-  workspaceOption.className = "agent-template-picker-item";
+  workspaceOption.className =
+    "agent-template-picker-item" + (currentValue === "workspace" ? " selected" : "");
   workspaceOption.textContent = t("agentTemplateWorkspaceOption");
   workspaceOption.addEventListener("click", () => {
     onSelect("workspace");
@@ -41,14 +42,16 @@ function openAgentTemplatePicker(onSelect) {
     if (event.target === overlay) closeAgentTemplatePicker();
   });
 
-  agentTemplatePickerState = { onSelect, data: {}, activeLang: null };
+  const [currentLangPart] = (currentValue || "").split("/");
+  agentTemplatePickerState = { onSelect, currentValue, data: {}, activeLang: null };
 
   fetch("/api/agent-templates")
     .then((response) => response.json())
     .then((data) => {
       if (!agentTemplatePickerState) return;
       agentTemplatePickerState.data = data;
-      agentTemplatePickerState.activeLang = Object.keys(data)[0] || null;
+      agentTemplatePickerState.activeLang =
+        (currentLangPart && data[currentLangPart] ? currentLangPart : Object.keys(data)[0]) || null;
       renderAgentTemplateTabs();
       renderAgentTemplateList();
     })
@@ -104,11 +107,14 @@ function renderAgentTemplateList() {
   const genres = (lang && agentTemplatePickerState.data[lang]) || [];
 
   for (const genre of genres) {
+    const value = `${lang}/${genre}`;
     const item = document.createElement("div");
-    item.className = "agent-template-picker-item";
+    item.className =
+      "agent-template-picker-item" +
+      (value === agentTemplatePickerState.currentValue ? " selected" : "");
     item.textContent = genre;
     item.addEventListener("click", () => {
-      agentTemplatePickerState.onSelect(`${lang}/${genre}`);
+      agentTemplatePickerState.onSelect(value);
       closeAgentTemplatePicker();
     });
     list.appendChild(item);
