@@ -146,6 +146,69 @@ def test_patch_workspace_with_invalid_old_name_returns_400_not_404():
     assert response.status_code == 400
 
 
+def test_duplicate_workspace_via_api():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a", "source_lang": "ja", "target_lang": "vi"})
+    client.put(
+        "/api/workspaces/novel-a/graph",
+        json={"nodes": [{"id": "1"}], "links": []},
+    )
+
+    response = client.post("/api/workspaces/novel-a/duplicate", json={"new_name": "novel-b"})
+
+    assert response.status_code == 201
+    assert client.get("/api/workspaces").json()["workspaces"] == ["novel-a", "novel-b"]
+    assert client.get("/api/workspaces/novel-b").json()["nodes"] == [{"id": "1"}]
+
+
+def test_duplicate_workspace_does_not_carry_over_output_files():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+    (workspace.get_workspace_path("novel-a", "output") / "ch1.txt").write_text(
+        "bản dịch", encoding="utf-8"
+    )
+
+    client.post("/api/workspaces/novel-a/duplicate", json={"new_name": "novel-b"})
+
+    assert client.get("/api/workspaces/novel-b/output").json() == {"files": []}
+
+
+def test_duplicate_missing_source_workspace_returns_404():
+    client = TestClient(app)
+    response = client.post(
+        "/api/workspaces/does-not-exist/duplicate", json={"new_name": "novel-b"}
+    )
+    assert response.status_code == 404
+
+
+def test_duplicate_workspace_to_existing_name_returns_409():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+    client.post("/api/workspaces", json={"name": "novel-b"})
+
+    response = client.post("/api/workspaces/novel-a/duplicate", json={"new_name": "novel-b"})
+
+    assert response.status_code == 409
+
+
+def test_duplicate_workspace_with_invalid_new_name_returns_400():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+
+    response = client.post("/api/workspaces/novel-a/duplicate", json={"new_name": "bad name"})
+
+    assert response.status_code == 400
+
+
+def test_duplicate_workspace_with_invalid_source_name_returns_400():
+    client = TestClient(app)
+    bad = "My%20Novel"
+
+    response = client.post(f"/api/workspaces/{bad}/duplicate", json={"new_name": "novel-b"})
+
+    assert response.status_code == 400
+
+
 def test_list_output_files_via_api():
     client = TestClient(app)
     client.post("/api/workspaces", json={"name": "novel-a"})

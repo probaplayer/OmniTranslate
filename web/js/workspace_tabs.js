@@ -168,6 +168,39 @@ function showTabContextMenu(event, tab) {
   });
   menu.appendChild(renameItem);
 
+  const duplicateItem = document.createElement("div");
+  duplicateItem.className = "tab-context-menu-item";
+  duplicateItem.textContent = t("duplicateWorkspaceButton");
+  duplicateItem.addEventListener("click", async () => {
+    closeTabContextMenu();
+    let newName = window.prompt(t("promptDuplicateWorkspace"), `${tab.workspaceName}-copy`);
+    if (newName === null) return;
+    newName = newName.trim();
+    if (!/^[A-Za-z0-9_-]+$/.test(newName)) {
+      setStatus(t("statusInvalidWorkspaceName"), "error");
+      return;
+    }
+    const response = await fetch(`/api/workspaces/${encodeURIComponent(tab.workspaceName)}/duplicate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ new_name: newName }),
+    });
+    if (!response.ok) {
+      let detail = `${t("statusDuplicateWorkspaceError")}${response.status}`;
+      try {
+        const body = await response.json();
+        if (body.detail) detail = body.detail;
+      } catch {
+        // response body wasn't JSON -- keep the generic message
+      }
+      setStatus(detail, "error");
+      return;
+    }
+    setStatus(t("statusDuplicatedWorkspace"), "ok");
+    openWorkspaceAsTab(newName);
+  });
+  menu.appendChild(duplicateItem);
+
   const outputItem = document.createElement("div");
   outputItem.className = "tab-context-menu-item";
   outputItem.textContent = t("outputManagerButton");

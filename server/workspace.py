@@ -115,6 +115,45 @@ def create_workspace(name: str, source_lang: str = "", target_lang: str = "") ->
     (ws_dir / "chapters.json").write_text(json.dumps({"chapters": []}), encoding="utf-8")
 
 
+def duplicate_workspace(source_name: str, new_name: str) -> None:
+    """Copy a workspace's workflow (graph.json, agent.md) into a new,
+    otherwise-empty workspace -- deliberately NOT its glossary, chapters
+    manifest/dir, or output/, since those are that source workspace's own
+    accumulated novel data, not part of the reusable workflow.
+
+    Read the source's config before create_workspace runs so the new
+    workspace starts with the same source/target language, then let
+    create_workspace do all the actual directory/file seeding (and its
+    existing validation: bad new_name -> InvalidWorkspaceNameError, name
+    collision -> WorkspaceError) exactly like a brand-new workspace would.
+    """
+    source_dir = _workspace_dir(source_name)
+    if not source_dir.exists():
+        raise WorkspaceError(f"Workspace '{source_name}' does not exist")
+
+    try:
+        source_config = json.loads(
+            (source_dir / "config.json").read_text(encoding="utf-8")
+        )
+    except (OSError, json.JSONDecodeError):
+        source_config = {}
+
+    create_workspace(
+        new_name,
+        source_lang=source_config.get("source_lang", ""),
+        target_lang=source_config.get("target_lang", ""),
+    )
+    new_dir = _workspace_dir(new_name)
+
+    graph_path = source_dir / "graph.json"
+    if graph_path.exists():
+        shutil.copyfile(graph_path, new_dir / "graph.json")
+
+    agent_path = source_dir / "agent.md"
+    if agent_path.exists():
+        shutil.copyfile(agent_path, new_dir / "agent.md")
+
+
 def open_workspace(name: str) -> dict:
     ws_dir = _workspace_dir(name)
     if not ws_dir.exists():

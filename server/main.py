@@ -43,6 +43,10 @@ class RenameWorkspaceRequest(BaseModel):
     new_name: str
 
 
+class DuplicateWorkspaceRequest(BaseModel):
+    new_name: str
+
+
 class TestProviderRequest(BaseModel):
     base_url: str
     api_key: str
@@ -207,6 +211,27 @@ def patch_workspace(name: str, body: RenameWorkspaceRequest):
         )
     try:
         workspace.rename_workspace(name, body.new_name)
+    except workspace.WorkspaceError as exc:
+        raise _workspace_http_error(exc, 409)
+    return {"name": body.new_name}
+
+
+@app.post("/api/workspaces/{name}/duplicate", status_code=201)
+def post_duplicate_workspace(name: str, body: DuplicateWorkspaceRequest):
+    # Same ambiguity as patch_workspace above: duplicate_workspace's bare
+    # WorkspaceError means "source missing" or "new_name taken" depending on
+    # which one triggered it. Resolve the source explicitly first so the
+    # only bare WorkspaceError left is the new-name conflict.
+    try:
+        source_dir = workspace.get_workspace_path(name)
+    except workspace.WorkspaceError as exc:
+        raise _workspace_http_error(exc, 404)
+    if not source_dir.exists():
+        raise HTTPException(
+            status_code=404, detail=f"Workspace '{name}' does not exist"
+        )
+    try:
+        workspace.duplicate_workspace(name, body.new_name)
     except workspace.WorkspaceError as exc:
         raise _workspace_http_error(exc, 409)
     return {"name": body.new_name}

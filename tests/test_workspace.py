@@ -308,6 +308,89 @@ def test_rename_workspace_rejects_invalid_new_name():
         workspace.rename_workspace("novel-a", "bad name")
 
 
+def test_duplicate_workspace_copies_graph_and_agent_file():
+    workspace.create_workspace("novel-a", source_lang="ja", target_lang="vi")
+    workspace.get_workspace_path("novel-a", "graph.json").write_text(
+        json.dumps({"nodes": [{"id": "1"}], "links": []}), encoding="utf-8"
+    )
+    workspace.get_workspace_path("novel-a", "agent.md").write_text(
+        "Hướng dẫn riêng cho truyện này", encoding="utf-8"
+    )
+
+    workspace.duplicate_workspace("novel-a", "novel-b")
+
+    assert set(workspace.list_workspaces()) == {"novel-a", "novel-b"}
+    copied_graph = workspace.open_workspace("novel-b")
+    assert copied_graph["nodes"] == [{"id": "1"}]
+    assert (
+        workspace.get_workspace_path("novel-b", "agent.md").read_text(encoding="utf-8")
+        == "Hướng dẫn riêng cho truyện này"
+    )
+    config = json.loads(
+        workspace.get_workspace_path("novel-b", "config.json").read_text(encoding="utf-8")
+    )
+    assert config["source_lang"] == "ja"
+    assert config["target_lang"] == "vi"
+
+
+def test_duplicate_workspace_does_not_copy_data():
+    workspace.create_workspace("novel-a")
+    workspace.get_workspace_path("novel-a", "glossary.json").write_text(
+        json.dumps({"entries": [{"term": "x"}]}), encoding="utf-8"
+    )
+    workspace.get_workspace_path("novel-a", "chapters.json").write_text(
+        json.dumps({"chapters": [{"chapter_id": "ch1"}]}), encoding="utf-8"
+    )
+    (workspace.get_workspace_path("novel-a", "output") / "ch1.txt").write_text(
+        "bản dịch", encoding="utf-8"
+    )
+
+    workspace.duplicate_workspace("novel-a", "novel-b")
+
+    glossary = json.loads(
+        workspace.get_workspace_path("novel-b", "glossary.json").read_text(encoding="utf-8")
+    )
+    assert glossary == {"entries": []}
+    chapters = json.loads(
+        workspace.get_workspace_path("novel-b", "chapters.json").read_text(encoding="utf-8")
+    )
+    assert chapters == {"chapters": []}
+    assert workspace.list_output_files("novel-b") == []
+
+
+def test_duplicate_missing_source_workspace_raises():
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.duplicate_workspace("does-not-exist", "novel-b")
+
+
+def test_duplicate_workspace_to_existing_name_raises():
+    workspace.create_workspace("novel-a")
+    workspace.create_workspace("novel-b")
+
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.duplicate_workspace("novel-a", "novel-b")
+
+
+def test_duplicate_workspace_rejects_invalid_new_name():
+    workspace.create_workspace("novel-a")
+
+    with pytest.raises(workspace.InvalidWorkspaceNameError):
+        workspace.duplicate_workspace("novel-a", "bad name")
+
+
+def test_duplicate_workspace_survives_missing_graph_and_agent_file():
+    """A source workspace whose graph.json/agent.md are missing (e.g.
+    corrupted on disk by hand) must still produce a usable, empty-workflow
+    duplicate rather than raising."""
+    workspace.create_workspace("novel-a")
+    workspace.get_workspace_path("novel-a", "graph.json").unlink()
+    workspace.get_workspace_path("novel-a", "agent.md").unlink()
+
+    workspace.duplicate_workspace("novel-a", "novel-b")
+
+    assert workspace.open_workspace("novel-b") == {"nodes": [], "links": []}
+
+
 def test_list_output_files_empty_for_new_workspace():
     workspace.create_workspace("novel-a")
 
