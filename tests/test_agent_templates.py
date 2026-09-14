@@ -29,6 +29,24 @@ def test_list_templates_groups_by_language():
     assert result == {"vn": ["ngon-tinh", "tien-hiep"], "en": ["tien-hiep"]}
 
 
+def test_list_templates_excludes_invalid_language_directory_name():
+    _seed("EN", "tien-hiep")  # uppercase language dir -- invalid slug
+    _seed("vn", "tien-hiep")
+
+    result = agent_templates.list_templates()
+
+    assert result == {"vn": ["tien-hiep"]}
+
+
+def test_list_templates_excludes_invalid_genre_filename():
+    _seed("vn", "Some Genre")  # spaces -- invalid slug
+    _seed("vn", "tien-hiep")
+
+    result = agent_templates.list_templates()
+
+    assert result == {"vn": ["tien-hiep"]}
+
+
 def test_resolve_template_path_returns_existing_file():
     path = _seed("vn", "tien-hiep", "nội dung mẫu")
 

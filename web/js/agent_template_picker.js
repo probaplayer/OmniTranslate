@@ -51,6 +51,9 @@ function openAgentTemplatePicker(onSelect) {
       agentTemplatePickerState.activeLang = Object.keys(data)[0] || null;
       renderAgentTemplateTabs();
       renderAgentTemplateList();
+    })
+    .catch(() => {
+      renderAgentTemplatePickerError(t("agentTemplateLoadError"));
     });
 }
 
@@ -58,6 +61,17 @@ function closeAgentTemplatePicker() {
   const overlay = document.getElementById("agent-template-picker-overlay");
   if (overlay) overlay.remove();
   agentTemplatePickerState = null;
+}
+
+function renderAgentTemplatePickerError(message) {
+  const overlay = document.getElementById("agent-template-picker-overlay");
+  if (!overlay) return;
+  const list = overlay.querySelector(".agent-template-picker-list");
+  list.innerHTML = "";
+  const errorEl = document.createElement("div");
+  errorEl.className = "agent-template-picker-item";
+  errorEl.textContent = message;
+  list.appendChild(errorEl);
 }
 
 function renderAgentTemplateTabs() {

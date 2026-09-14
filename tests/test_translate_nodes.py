@@ -72,6 +72,14 @@ def test_load_agent_file_node_raises_when_missing():
         node.execute(workspace_name="novel-a")
 
 
+def test_load_agent_file_node_with_empty_template_string_raises():
+    workspace.create_workspace("novel-a")
+    node = get_node_class("LoadAgentFile")()
+
+    with pytest.raises(ValueError):
+        node.execute(workspace_name="novel-a", template="")
+
+
 def test_save_agent_file_node_overwrites_content():
     workspace.create_workspace("novel-a")
     node = get_node_class("SaveAgentFile")()

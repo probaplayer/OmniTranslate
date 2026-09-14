@@ -14,10 +14,13 @@ def list_templates() -> dict[str, list[str]]:
         return {}
     result = {}
     for lang_dir in sorted(AGENTS_ROOT.iterdir()):
-        if not lang_dir.is_dir():
+        if not lang_dir.is_dir() or not _is_valid_slug(lang_dir.name):
             continue
-        genres = sorted(p.stem for p in lang_dir.glob("*.md"))
-        result[lang_dir.name] = genres
+        genres = sorted(
+            p.stem for p in lang_dir.glob("*.md") if _is_valid_slug(p.stem)
+        )
+        if genres:
+            result[lang_dir.name] = genres
     return result
 
 
