@@ -152,3 +152,27 @@ def delete_workspace(name: str) -> None:
     if not ws_dir.exists():
         raise WorkspaceError(f"Workspace '{name}' does not exist")
     shutil.rmtree(ws_dir)
+
+
+def rename_workspace(old_name: str, new_name: str) -> None:
+    old_dir = _workspace_dir(old_name)
+    if not old_dir.exists():
+        raise WorkspaceError(f"Workspace '{old_name}' does not exist")
+    new_dir = _workspace_dir(new_name)
+    if new_dir.exists():
+        raise WorkspaceError(f"Workspace '{new_name}' already exists")
+    old_dir.rename(new_dir)
+
+    # config.json's "name" field is never read anywhere else in the app --
+    # this is purely so the file doesn't sit there with a stale name if
+    # someone inspects it by hand. A failure here must not undo the rename
+    # itself, which already succeeded.
+    config_path = new_dir / "config.json"
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        config["name"] = new_name
+        config_path.write_text(
+            json.dumps(config, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+    except (OSError, json.JSONDecodeError):
+        pass

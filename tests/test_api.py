@@ -96,6 +96,56 @@ def test_put_and_delete_missing_workspace_return_404():
     assert client.delete("/api/workspaces/does-not-exist").status_code == 404
 
 
+def test_patch_workspace_renames_it():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+
+    response = client.patch("/api/workspaces/novel-a", json={"new_name": "novel-b"})
+
+    assert response.status_code == 200
+    assert client.get("/api/workspaces").json()["workspaces"] == ["novel-b"]
+
+
+def test_patch_missing_workspace_returns_404():
+    client = TestClient(app)
+    response = client.patch(
+        "/api/workspaces/does-not-exist", json={"new_name": "novel-b"}
+    )
+    assert response.status_code == 404
+
+
+def test_patch_workspace_to_existing_name_returns_409():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+    client.post("/api/workspaces", json={"name": "novel-b"})
+
+    response = client.patch("/api/workspaces/novel-a", json={"new_name": "novel-b"})
+
+    assert response.status_code == 409
+
+
+def test_patch_workspace_with_invalid_new_name_returns_400():
+    client = TestClient(app)
+    client.post("/api/workspaces", json={"name": "novel-a"})
+
+    response = client.patch("/api/workspaces/novel-a", json={"new_name": "bad name"})
+
+    assert response.status_code == 400
+
+
+def test_patch_workspace_with_invalid_old_name_returns_400_not_404():
+    """A malformed old name must not be silently treated as 'not found' --
+    list_workspaces() filters malformed names out of its own listing, which
+    would make a naive 'is this name in the list' check return 404 instead
+    of the 400 every other workspace endpoint gives for a bad name."""
+    client = TestClient(app)
+    bad = "My%20Novel"
+
+    response = client.patch(f"/api/workspaces/{bad}", json={"new_name": "novel-b"})
+
+    assert response.status_code == 400
+
+
 def test_create_workspace_with_invalid_name_returns_400():
     client = TestClient(app)
     response = client.post("/api/workspaces", json={"name": "My Novel"})

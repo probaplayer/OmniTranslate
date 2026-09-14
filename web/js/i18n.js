@@ -64,6 +64,10 @@ const STR = {
     confirmDeleteWorkspace: "Xóa vĩnh viễn workspace '{name}'? Toàn bộ chương, bản dịch, glossary sẽ mất, không thể hoàn tác.",
     statusDeleteWorkspaceError: "Lỗi xóa workspace: ",
     statusDeletedWorkspace: "Đã xóa workspace",
+    renameWorkspaceButton: "Đổi tên",
+    promptRenameWorkspace: "Đặt tên mới cho workspace:",
+    statusRenameWorkspaceError: "Lỗi đổi tên: ",
+    statusRenamedWorkspace: "Đã đổi tên workspace",
   },
   en: {
     pickerTitle: "Select workspace",
@@ -130,6 +134,10 @@ const STR = {
     confirmDeleteWorkspace: "Permanently delete workspace '{name}'? All chapters, translations, and the glossary will be lost — this cannot be undone.",
     statusDeleteWorkspaceError: "Failed to delete workspace: ",
     statusDeletedWorkspace: "Workspace deleted",
+    renameWorkspaceButton: "Rename",
+    promptRenameWorkspace: "New name for this workspace:",
+    statusRenameWorkspaceError: "Rename failed: ",
+    statusRenamedWorkspace: "Workspace renamed",
   },
 };
 

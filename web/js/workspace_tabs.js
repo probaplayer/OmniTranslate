@@ -132,8 +132,44 @@ function showTabContextMenu(event, tab) {
   menu.style.left = `${event.clientX}px`;
   menu.style.top = `${event.clientY}px`;
 
+  const renameItem = document.createElement("div");
+  renameItem.className = "tab-context-menu-item";
+  renameItem.textContent = t("renameWorkspaceButton");
+  renameItem.addEventListener("click", async () => {
+    closeTabContextMenu();
+    let newName = window.prompt(t("promptRenameWorkspace"), tab.workspaceName);
+    if (newName === null) return;
+    newName = newName.trim();
+    if (newName === tab.workspaceName) return;
+    if (!/^[A-Za-z0-9_-]+$/.test(newName)) {
+      setStatus(t("statusInvalidWorkspaceName"), "error");
+      return;
+    }
+    const response = await fetch(`/api/workspaces/${encodeURIComponent(tab.workspaceName)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ new_name: newName }),
+    });
+    if (!response.ok) {
+      let detail = `${t("statusRenameWorkspaceError")}${response.status}`;
+      try {
+        const body = await response.json();
+        if (body.detail) detail = body.detail;
+      } catch {
+        // response body wasn't JSON -- keep the generic message
+      }
+      setStatus(detail, "error");
+      return;
+    }
+    tab.workspaceName = newName;
+    renderTabBar();
+    persistTabState();
+    setStatus(t("statusRenamedWorkspace"), "ok");
+  });
+  menu.appendChild(renameItem);
+
   const deleteItem = document.createElement("div");
-  deleteItem.className = "tab-context-menu-item";
+  deleteItem.className = "tab-context-menu-item danger";
   deleteItem.textContent = t("deleteWorkspaceButton");
   deleteItem.addEventListener("click", async () => {
     closeTabContextMenu();

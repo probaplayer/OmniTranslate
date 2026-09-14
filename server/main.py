@@ -38,6 +38,10 @@ class CreateWorkspaceRequest(BaseModel):
     target_lang: str = ""
 
 
+class RenameWorkspaceRequest(BaseModel):
+    new_name: str
+
+
 def _workspace_http_error(
     exc: workspace.WorkspaceError, base_status: int
 ) -> HTTPException:
@@ -141,6 +145,30 @@ def put_workspace_graph(name: str, graph: dict):
     except workspace.WorkspaceError as exc:
         raise _workspace_http_error(exc, 404)
     return {"status": "ok"}
+
+
+@app.patch("/api/workspaces/{name}")
+def patch_workspace(name: str, body: RenameWorkspaceRequest):
+    # The base WorkspaceError (bare "does not exist" / "already exists") is
+    # ambiguous here -- rename_workspace can raise it for either the old name
+    # (404) or the new one (409). Resolve the old name's path first (this
+    # alone validates its format, raising InvalidWorkspaceNameError -> 400 for
+    # a malformed one, same as every other workspace endpoint) and check
+    # existence explicitly, so the only bare WorkspaceError that can reach
+    # the second except below is the new-name conflict.
+    try:
+        old_dir = workspace.get_workspace_path(name)
+    except workspace.WorkspaceError as exc:
+        raise _workspace_http_error(exc, 404)
+    if not old_dir.exists():
+        raise HTTPException(
+            status_code=404, detail=f"Workspace '{name}' does not exist"
+        )
+    try:
+        workspace.rename_workspace(name, body.new_name)
+    except workspace.WorkspaceError as exc:
+        raise _workspace_http_error(exc, 409)
+    return {"name": body.new_name}
 
 
 @app.delete("/api/workspaces/{name}")

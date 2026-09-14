@@ -263,3 +263,46 @@ def test_get_workspace_path_with_none_raises_invalid_name_not_type_error():
 def test_is_valid_workspace_name_is_total_for_non_strings():
     assert workspace._is_valid_workspace_name(None) is False
     assert workspace._is_valid_workspace_name(42) is False
+
+
+def test_rename_workspace_moves_the_directory():
+    workspace.create_workspace("novel-a")
+
+    workspace.rename_workspace("novel-a", "novel-b")
+
+    assert workspace.list_workspaces() == ["novel-b"]
+    assert workspace.open_workspace("novel-b")["nodes"] == []
+
+
+def test_rename_workspace_updates_config_name():
+    workspace.create_workspace("novel-a")
+
+    workspace.rename_workspace("novel-a", "novel-b")
+
+    config = json.loads(
+        workspace.get_workspace_path("novel-b", "config.json").read_text(encoding="utf-8")
+    )
+    assert config["name"] == "novel-b"
+
+
+def test_rename_missing_workspace_raises():
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.rename_workspace("does-not-exist", "novel-b")
+
+
+def test_rename_to_existing_name_raises():
+    workspace.create_workspace("novel-a")
+    workspace.create_workspace("novel-b")
+
+    with pytest.raises(workspace.WorkspaceError):
+        workspace.rename_workspace("novel-a", "novel-b")
+
+    # Neither workspace was touched by the failed rename.
+    assert set(workspace.list_workspaces()) == {"novel-a", "novel-b"}
+
+
+def test_rename_workspace_rejects_invalid_new_name():
+    workspace.create_workspace("novel-a")
+
+    with pytest.raises(workspace.InvalidWorkspaceNameError):
+        workspace.rename_workspace("novel-a", "bad name")
