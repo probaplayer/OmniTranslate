@@ -59,6 +59,10 @@ function renderTabBar() {
     const pill = document.createElement("div");
     pill.className = "workspace-tab" + (tab.id === activeTabId ? " active" : "");
     pill.addEventListener("click", () => switchToTab(tab.id));
+    pill.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+      showTabContextMenu(event, tab);
+    });
 
     if (tab.dirty) {
       const dot = document.createElement("span");
@@ -89,12 +93,9 @@ function switchToTab(id) {
   activateTab(tab);
 }
 
-function closeTab(id) {
-  const tab = tabs.find((t) => t.id === id);
-  if (!tab) return;
-  if (tab.dirty && !window.confirm(t("confirmDiscardTab"))) return;
-
+function removeTab(tab) {
   const index = tabs.indexOf(tab);
+  if (index === -1) return;
   tabs.splice(index, 1);
   tab.graph.stop();
 
@@ -107,6 +108,63 @@ function closeTab(id) {
     renderTabBar();
   }
   persistTabState();
+}
+
+function closeTab(id) {
+  const tab = tabs.find((t) => t.id === id);
+  if (!tab) return;
+  if (tab.dirty && !window.confirm(t("confirmDiscardTab"))) return;
+  removeTab(tab);
+}
+
+function closeTabContextMenu() {
+  const existing = document.getElementById("tab-context-menu");
+  if (existing) existing.remove();
+}
+
+function showTabContextMenu(event, tab) {
+  closeTabContextMenu();
+  if (!tab.workspaceName) return; // nothing on disk to delete for an unsaved tab
+
+  const menu = document.createElement("div");
+  menu.id = "tab-context-menu";
+  menu.className = "tab-context-menu";
+  menu.style.left = `${event.clientX}px`;
+  menu.style.top = `${event.clientY}px`;
+
+  const deleteItem = document.createElement("div");
+  deleteItem.className = "tab-context-menu-item";
+  deleteItem.textContent = t("deleteWorkspaceButton");
+  deleteItem.addEventListener("click", async () => {
+    closeTabContextMenu();
+    if (!window.confirm(t("confirmDeleteWorkspace").replace("{name}", tab.workspaceName))) return;
+    const response = await fetch(`/api/workspaces/${encodeURIComponent(tab.workspaceName)}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      setStatus(`${t("statusDeleteWorkspaceError")}${response.status}`, "error");
+      return;
+    }
+    removeTab(tab);
+    setStatus(t("statusDeletedWorkspace"), "ok");
+  });
+  menu.appendChild(deleteItem);
+
+  document.body.appendChild(menu);
+
+  // Deferred so the same right-click that opened the menu doesn't immediately
+  // dismiss it via bubbling on browsers that fire "click" after "contextmenu".
+  setTimeout(() => {
+    document.addEventListener("click", dismissTabContextMenuOnOutsideClick);
+  }, 0);
+}
+
+function dismissTabContextMenuOnOutsideClick(event) {
+  const menu = document.getElementById("tab-context-menu");
+  if (menu && !menu.contains(event.target)) {
+    closeTabContextMenu();
+  }
+  document.removeEventListener("click", dismissTabContextMenuOnOutsideClick);
 }
 
 function createBlankTab() {

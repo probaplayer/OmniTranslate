@@ -177,6 +177,25 @@
       color: var(--text-faint);
     }
 
+    .tab-context-menu {
+      position: fixed;
+      min-width: 160px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 4px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+      z-index: 20;
+    }
+    .tab-context-menu-item {
+      padding: 7px 10px;
+      font-size: 12.5px;
+      color: var(--danger);
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .tab-context-menu-item:hover { background: var(--bg-hover); }
+
     .path-picker-overlay {
       position: fixed;
       inset: 0;

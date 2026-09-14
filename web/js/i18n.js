@@ -60,6 +60,10 @@ const STR = {
     agentTemplateWorkspaceOption: "Tùy chỉnh riêng cho workspace này",
     agentTemplateCancel: "Hủy",
     agentTemplateLoadError: "Không kết nối được tới server.",
+    deleteWorkspaceButton: "Xóa workspace",
+    confirmDeleteWorkspace: "Xóa vĩnh viễn workspace '{name}'? Toàn bộ chương, bản dịch, glossary sẽ mất, không thể hoàn tác.",
+    statusDeleteWorkspaceError: "Lỗi xóa workspace: ",
+    statusDeletedWorkspace: "Đã xóa workspace",
   },
   en: {
     pickerTitle: "Select workspace",
@@ -122,6 +126,10 @@ const STR = {
     agentTemplateWorkspaceOption: "Custom for this workspace",
     agentTemplateCancel: "Cancel",
     agentTemplateLoadError: "Could not reach the server.",
+    deleteWorkspaceButton: "Delete workspace",
+    confirmDeleteWorkspace: "Permanently delete workspace '{name}'? All chapters, translations, and the glossary will be lost — this cannot be undone.",
+    statusDeleteWorkspaceError: "Failed to delete workspace: ",
+    statusDeletedWorkspace: "Workspace deleted",
   },
 };
 
